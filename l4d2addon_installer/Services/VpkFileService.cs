@@ -26,6 +26,7 @@ public partial class VpkFileService
     public delegate void VpkFileRenamedDelegate(string oldFullPath, string newFullPath);
 
     private string? _addonPath;
+
     private FileSystemWatcher? _fileWatcher;
     private string? _gamePath;
     private string? _steamPath;
@@ -334,8 +335,8 @@ public partial class VpkFileService
                 string? value = key.GetValue("SteamPath")?.ToString();
                 if (value != null)
                 {
-                    _steamPath = value;
-                    return value;
+                    _steamPath = new Uri(value).LocalPath;
+                    return _steamPath;
                 }
             }
 
@@ -374,7 +375,7 @@ public partial class VpkFileService
             if (Directory.Exists(gamePath))
             {
                 _gamePath = gamePath;
-                return gamePath;
+                return _gamePath;
             }
         }
 
@@ -384,7 +385,7 @@ public partial class VpkFileService
         if (Directory.Exists(defaultGamePath))
         {
             _gamePath = defaultGamePath;
-            return defaultGamePath;
+            return _gamePath;
         }
 
         //如果还是没找到则抛出异常
@@ -408,7 +409,105 @@ public partial class VpkFileService
         }
 
         _addonPath = addonsPath;
-        return addonsPath;
+        return _addonPath;
+    }
+
+    /// <summary>
+    /// 通过explorer 打开addons文件夹
+    /// </summary>
+    /// <exception cref="ServiceException"></exception>
+    /// <returns></returns>
+    public Task OpenAddonsFloderAsync()
+    {
+        string path = GetAddonsPath();
+        return OpenPathAsync(path);
+    }
+
+    /// <summary>
+    /// 通过explorer 打开l4d2文件夹
+    /// </summary>
+    /// <exception cref="ServiceException"></exception>
+    /// <returns></returns>
+    public Task OpenGameFolderAsync()
+    {
+        string path = GetGamePath();
+        return OpenPathAsync(path);
+    }
+
+    /// <summary>
+    /// 通过explorer 打开下载文件夹
+    /// </summary>
+    /// <exception cref="ServiceException"></exception>
+    /// <returns></returns>
+    public Task OpenDownloadsFolderAsync()
+    {
+        string path = "shell:Downloads";
+        return OpenPathAsync(path);
+    }
+
+    /// <summary>
+    /// 通过explorer 打开回收站
+    /// </summary>
+    /// <exception cref="ServiceException"></exception>
+    /// <returns></returns>
+    public Task OpenRecycleBinFolderAsync()
+    {
+        string path = "shell:RecycleBinFolder";
+        return OpenPathAsync(path);
+    }
+
+    /// <summary>
+    /// 启动left 4 dead 2
+    /// </summary>
+    /// <exception cref="ServiceException"></exception>
+    /// <returns></returns>
+    public async Task StartGameAsync()
+    {
+        try
+        {
+            await Task.Run(() =>
+            {
+                //查询游戏是否已存在
+                var result = Process.GetProcessesByName("left4dead2");
+                if (result.Length > 0) throw new ServiceException("left4dead2.exe 已存在，请勿重复启动！");
+
+                Process.Start(new ProcessStartInfo("steam://rungameid/550")
+                {
+                    UseShellExecute = true
+                });
+            });
+        }
+        catch (ServiceException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException("启动游戏出错: " + e.Message, e);
+        }
+    }
+
+    //通过explorer 打开路径
+    private async Task OpenPathAsync(string path)
+    {
+        try
+        {
+            await Task.Run(() =>
+            {
+                var process = Process.Start("explorer.exe", $"\"{path}\"");
+                process.WaitForExit();
+                int exitCode = process.ExitCode;
+                if (exitCode != 1)
+                {
+                    throw new ServiceException($"explorer returned exit code [{exitCode}]");
+                }
+            });
+            await Task.Delay(500); //延迟500毫秒 优化用户体验
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException("explorer执行出错: " + e.Message, e);
+        }
     }
 
     //监听文件夹中，文件的新增和删除

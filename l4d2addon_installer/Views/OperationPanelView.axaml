@@ -79,8 +79,12 @@
 
     <Grid RowDefinitions="50*,50*">
         <WrapPanel Classes="top" Grid.Row="0" Orientation="Horizontal">
-            <Button>jljlkj</Button>
-            <Button>jljlkj</Button>
+            <Button Command="{Binding OpenAddonsFloderCommand}">addons文件夹</Button>
+            <Button Command="{Binding OpenGameFolderCommand}">l4d2文件夹</Button>
+            <Button Command="{Binding OpenDownloadsFolderCommand}">下载文件夹</Button>
+            <Button Command="{Binding OpenRecycleBinFolderCommand}">打开回收站</Button>
+            <Button Command="{Binding StartGameCommand}">启动游戏</Button>
+            <!-- <Button>关于</Button> -->
         </WrapPanel>
 
         <Panel Classes="bottom" Grid.Row="1" x:Name="BottomPanel">

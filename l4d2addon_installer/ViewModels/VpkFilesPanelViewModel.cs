@@ -118,7 +118,7 @@ public partial class VpkFilesPanelViewModel : ServiceViewModelBase
     /// <summary>
     /// 更新vpk列表
     /// </summary>
-    public virtual async Task UpdateVpkFilesAsync()
+    public async Task UpdateVpkFilesAsync()
     {
         try
         {
@@ -221,8 +221,6 @@ public partial class VpkFileInfoViewModel : ViewModelBase
     [ObservableProperty]
     private string _path = string.Empty;
 
-    private string? _pathCore;
-
     /// <summary>
     /// 文件大小
     /// </summary>
@@ -241,17 +239,6 @@ public partial class VpkFileInfoViewModel : ViewModelBase
         _creationTimeCore = fileInfo.CreationTime;
         CreationTime = string.Concat("创建日期: ", fileInfo.CreationTime.ToString("yyyy-MM-dd HH:mm"));
         Size = string.Concat("大小: ", FormatFileSize(fileInfo.Size));
-    }
-
-    private string PathCore
-    {
-        get
-        {
-            if (_pathCore != null) return _pathCore;
-
-            _pathCore = System.IO.Path.GetFullPath(Path);
-            return _pathCore;
-        }
     }
 
     private static string FormatFileSize(long size)
@@ -278,7 +265,7 @@ public partial class VpkFileInfoViewModel : ViewModelBase
             if (y is null) return 1;
             if (x is null) return -1;
 
-            if (x.PathCore == y.PathCore) return 0;
+            if (x.Path == y.Path) return 0;
 
             //根据创建日期从大到小排序
             int creationTimeComparison = y._creationTimeCore.CompareTo(x._creationTimeCore);
