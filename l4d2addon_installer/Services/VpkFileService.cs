@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 using l4d2addon_installer.Models;
 using l4d2addon_installer.ViewModels;
 using Microsoft.Win32;
+using SharpCompress.Archives;
+using SharpCompress.Common;
+
+// ReSharper disable InconsistentNaming
 
 namespace l4d2addon_installer.Services;
 
@@ -21,16 +25,13 @@ public partial class VpkFileService
 
     public delegate void VpkFileRenamedDelegate(string oldFullPath, string newFullPath);
 
-    private readonly LoggerService _logger;
     private string? _addonPath;
-
     private FileSystemWatcher? _fileWatcher;
     private string? _gamePath;
     private string? _steamPath;
 
-    public VpkFileService(LoggerService logger)
+    public VpkFileService()
     {
-        _logger = logger;
         WatcherAddons(GetAddonsPath());
     }
 
@@ -130,58 +131,189 @@ public partial class VpkFileService
     /// <summary>
     /// 删除vpk文件
     /// </summary>
-    /// <param name="fileInfos"></param>
-    /// <param name="toTrash">是否移动到回收站</param>
-    /// <exception cref="AggregateException"></exception>
-    public Task DeleteVpkFilesAsync(IEnumerable<VpkFileInfoViewModel> fileInfos, bool toTrash)
+    public async Task DeleteVpkFilesAsync(IList<VpkFileInfoViewModel> fileInfos, bool toTrash,
+        Action<string?, AggregateException?> progressCallback)
     {
-        return Task.Run(() =>
+        var tasks = new List<Task>(fileInfos.Count);
+        foreach (var fileInfo in fileInfos)
         {
-            var exceptions = new List<ServiceException>();
-            if (toTrash)
+            var task = DeleteCore(fileInfo, toTrash, progressCallback);
+            _ = task.ContinueWith(t => progressCallback(null, t.Exception), TaskContinuationOptions.OnlyOnFaulted);
+            tasks.Add(task);
+        }
+
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception)
+        {
+            // ignored
+            //捕获所有异常，并忽略
+            //因为所有异常都转交给 progressCallback了
+        }
+
+        return;
+
+        static Task DeleteCore(VpkFileInfoViewModel fileInfo, bool toTrash, Action<string?, AggregateException?> progressCallback)
+        {
+            return Task.Run(() =>
             {
-                //将文件移到回收站
-                foreach (var fileInfo in fileInfos)
+                if (toTrash)
                 {
+                    //将文件移到回收站
                     try
                     {
                         RecycleBinHelper.DeleteToRecycleBin(fileInfo.Path);
-                        _logger.LogMessage($"{fileInfo.Name} 已成功移至回收站");
+                        progressCallback($"{fileInfo.Name} 已成功移至回收站", null);
                     }
                     catch (Exception e)
                     {
-                        exceptions.Add(new ServiceException($"文件移至回收站时出错：{e.Message}", e));
+                        throw new ServiceException($"文件移至回收站时出错：{e.Message}", e);
                     }
                 }
-            }
-            else
-            {
-                //直接删除文件
-                foreach (var fileInfo in fileInfos)
+                else
                 {
+                    //直接删除文件
                     try
                     {
                         File.Delete(fileInfo.Path);
-                        _logger.LogMessage($"{fileInfo.Name} 删除成功");
+                        progressCallback($"{fileInfo.Name} 删除成功", null);
                     }
                     catch (Exception e)
                     {
-                        exceptions.Add(new ServiceException($"文件删除时出错：{e.Message}", e));
+                        throw new ServiceException($"文件删除时出错：{e.Message}", e);
                     }
                 }
-            }
-
-            if (exceptions.Count > 0) throw new AggregateException(exceptions);
-        });
+            });
+        }
     }
 
     /// <summary>
     /// 安装vpk文件 支持.vpk .zip .rar
     /// </summary>
-    /// <param name="filePaths"></param>
-    /// <returns></returns>
-    /// <exception cref="AggregateException"></exception>
-    public Task InstallVpkFilesAsync(IEnumerable<string> filePaths) => throw new NotImplementedException();
+    public async Task InstallVpkFilesAsync(IList<string> filePaths, bool isCoverd,
+        Action<string?, AggregateException?> progressCallback)
+    {
+        ArgumentNullException.ThrowIfNull(progressCallback);
+
+        //错误处理流程
+        //如果是不影响接下逻辑执行的，则使用progressCallback 抛出
+        //如果错误是会中断流程的，则使用throw抛出
+
+        string addonsPath = GetAddonsPath();
+        var tasks = new List<Task>(filePaths.Count);
+        foreach (string filePath in filePaths)
+        {
+            string ext = Path.GetExtension(filePath);
+
+            if (".vpk".Equals(ext, StringComparison.OrdinalIgnoreCase))
+            {
+                var task = VpkInstaller(filePath, addonsPath, isCoverd, progressCallback);
+                RegisterFaultedContinueTask(task, progressCallback);
+                tasks.Add(task);
+            }
+            else if (".zip".Equals(ext, StringComparison.OrdinalIgnoreCase)
+                     || ".rar".Equals(ext, StringComparison.OrdinalIgnoreCase))
+            {
+                //在SharpCompress 解压.zip 和.rar 使用同一套代码
+                var task = ZipInstaller(filePath, addonsPath, isCoverd, progressCallback);
+                RegisterFaultedContinueTask(task, progressCallback);
+                tasks.Add(task);
+            }
+            else
+            {
+                progressCallback(null, new AggregateException(new ServiceException($"{Path.GetFileName(filePath)} --> 不支持该文件格式")));
+            }
+        }
+
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception)
+        {
+            // ignored
+            //捕获所有异常，并忽略
+            //因为所有异常都转交给 progressCallback了
+        }
+
+
+        static Task VpkInstaller(string filePath, string addonsPath, bool isCoverd,
+            Action<string?, AggregateException?> progressCallback)
+        {
+            return Task.Run(() =>
+            {
+                string fileName = Path.GetFileName(filePath);
+                string destPath = Path.Combine(addonsPath, fileName);
+                try
+                {
+                    File.Copy(filePath, destPath, isCoverd);
+                    progressCallback($"{Path.GetFileName(filePath)} 已安装", null);
+                }
+                catch (IOException)
+                {
+                    //当isCoverd为true时，目标文件已存在，则会抛出IOException
+                    throw new ServiceException($"{fileName} 已存在");
+                }
+            });
+        }
+
+        static Task ZipInstaller(string filePath, string addonsPath, bool isCoverd,
+            Action<string?, AggregateException?> progressCallback)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                using var archive = ArchiveFactory.Open(filePath);
+                string fileName = Path.GetFileName(filePath);
+                var entries = archive.Entries.Where(entry =>
+                    !entry.IsDirectory
+                    && ".vpk".Equals(Path.GetExtension(entry.Key), StringComparison.OrdinalIgnoreCase)).ToArray();
+
+                if (entries.Length == 0)
+                {
+                    throw new ServiceException($"{fileName} --> 未找到需要安装的vpk文件");
+                }
+
+                if (entries.Any(e => e.IsEncrypted))
+                {
+                    throw new ServiceException($"{fileName} --> 不支持的加密压缩包");
+                }
+
+                progressCallback($"{fileName} --> {entries.Select(entry => $"\"{entry.Key}\"").Aggregate((pv, cv) => $"{pv}, {cv}")}", null);
+
+                //写入文件
+                foreach (var entry in entries)
+                {
+                    if (entry.Key is null) continue;
+
+                    if (!isCoverd)
+                    {
+                        if (File.Exists(Path.Combine(addonsPath, entry.Key)))
+                        {
+                            progressCallback(null, new AggregateException(new ServiceException($"{fileName} --> {entry.Key} 已存在")));
+                            continue;
+                        }
+                    }
+
+                    entry.WriteToDirectory(addonsPath, new ExtractionOptions
+                    {
+                        Overwrite = isCoverd,
+                        ExtractFullPath = true
+                    });
+                    progressCallback($"{fileName} --> {entry.Key} 已安装", null);
+                }
+            }, TaskCreationOptions.LongRunning);
+        }
+
+        static void RegisterFaultedContinueTask(Task task, Action<string?, AggregateException?>? progressCallback)
+        {
+            if (progressCallback is not null)
+            {
+                task.ContinueWith(t => progressCallback(null, t.Exception), TaskContinuationOptions.OnlyOnFaulted);
+            }
+        }
+    }
 
     /// <summary>
     /// 获取Steam路径
@@ -308,9 +440,9 @@ public partial class VpkFileService
         _fileWatcher.Error += (_, e) =>
         {
             var ex = e.GetException();
-            _logger.LogError("[Addons Watcher发生错误] " + ex.Message);
             _fileWatcher.Dispose();
             _fileWatcher = null;
+            throw new ServiceException("[Addons Watcher发生错误] " + ex.Message);
         };
     }
 

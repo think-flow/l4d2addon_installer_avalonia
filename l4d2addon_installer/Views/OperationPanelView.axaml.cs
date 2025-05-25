@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
@@ -20,11 +21,17 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     public OperationPanelView()
     {
         InitializeComponent();
-        
+
         if (Design.IsDesignMode) return;
         BottomPanel.SetValue(DragDrop.AllowDropProperty, true);
         BottomPanel.AddHandler(DragDrop.DropEvent, BottomPanel_Drop);
         BottomPanel.PointerPressed += BottomPanel_PointerPressed;
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        InitializeIsCoverd();
     }
 
     //选择文件安装
@@ -71,24 +78,42 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
         Debug.Assert(DataContext is not null);
         Debug.Assert(Provider is not null);
 
+        var logger = Provider.GetRequiredService<LoggerService>();
         DataContext.ShowLoading = true;
+
+        bool isCoverd = DataContext.IsCoverd;
         var vpkFileService = Provider.GetRequiredService<VpkFileService>();
-        try
+
+        //并行安装文件
+        await vpkFileService.InstallVpkFilesAsync(filePaths, isCoverd, (msg, ex) =>
         {
-            await vpkFileService.InstallVpkFilesAsync(filePaths);
-        }
-        catch (AggregateException e)
-        {
-            var logger = Provider.GetService<LoggerService>();
-            if (logger == null) throw;
-            foreach (var innerException in e.InnerExceptions)
+            if (ex is not null)
             {
-                logger.LogError(innerException.Message);
+                foreach (var inner in ex.InnerExceptions)
+                {
+                    logger.LogError(inner.Message);
+                }
+
+                return;
             }
-        }
-        finally
-        {
-            DataContext.ShowLoading = false;
-        }
+
+            if (msg is not null)
+            {
+                logger.LogMessage(msg);
+            }
+        });
+
+        DataContext.ShowLoading = false;
+    }
+
+    //初始化 安装文件时是否覆盖的选项
+    private void InitializeIsCoverd()
+    {
+        Debug.Assert(Provider is not null);
+        Debug.Assert(DataContext is not null);
+
+        var appConfig = Provider.GetRequiredService<AppConfigService>().AppConfig;
+        bool isCoverd = appConfig.IsCoverd ?? false;
+        DataContext.IsCoverd = isCoverd;
     }
 }

@@ -95,17 +95,24 @@ public partial class VpkFilesPanelViewModel : ServiceViewModelBase
     {
         if (SelectedVpkFiles.Count <= 0) return;
 
-        try
+        bool toTrash = true;
+        await _vpkFileService.DeleteVpkFilesAsync(SelectedVpkFiles.ToArray(), toTrash, (msg, ex) =>
         {
-            await _vpkFileService.DeleteVpkFilesAsync(SelectedVpkFiles.ToArray(), true);
-        }
-        catch (AggregateException e)
-        {
-            foreach (var innerException in e.InnerExceptions)
+            if (ex is not null)
             {
-                _logger.LogError(innerException.Message);
+                foreach (var inner in ex.InnerExceptions)
+                {
+                    _logger.LogError(inner.Message);
+                }
+
+                return;
             }
-        }
+
+            if (msg is not null)
+            {
+                _logger.LogMessage(msg);
+            }
+        });
     }
 
     /// <summary>
