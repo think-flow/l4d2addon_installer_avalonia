@@ -1,0 +1,48 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="l4d2addon_installer.App"
+             xmlns:local="using:l4d2addon_installer"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             RequestedThemeVariant="Default">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- 更改全局字体大小和样式 -->
+        <Style Selector="Window">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontFamily"
+                    Value="Helvetica Neue,Helvetica,PingFang SC,Hiragino Sans GB,Microsoft YaHei,微软雅黑,Arial,sans-serif" />
+        </Style>
+
+        <!-- 滚动条样式 -->
+        <Style Selector="ScrollViewer.scrollbar, ListBox.scrollbar">
+            <!-- 隐藏掉滚动条的滑轨 -->
+            <Style Selector="^ ScrollBar /template/ Rectangle#TrackRect">
+                <Setter Property="IsVisible" Value="False" />
+            </Style>
+            <!-- 隐藏掉滚动条的上下两个箭头按钮 -->
+            <Style Selector="^ ScrollBar /template/ RepeatButton">
+                <Setter Property="IsVisible" Value="False" />
+            </Style>
+            <!-- 设置滑块的样式 -->
+            <Style Selector="^ ScrollBar /template/ Thumb /template/ Border">
+                <Setter Property="Opacity" Value="0.3" />
+                <Setter Property="Background" Value="#909399" />
+                <Style Selector="^:pointerover">
+                    <Setter Property="Opacity" Value="0.7" />
+                    <Setter Property="Cursor" Value="Hand" />
+                </Style>
+            </Style>
+        </Style>
+    </Application.Styles>
+
+    <Application.Resources>
+        <system:String x:Key="StringTextFlyoutCopyText">复制</system:String>
+    </Application.Resources>
+</Application>

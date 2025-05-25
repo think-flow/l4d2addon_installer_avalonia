@@ -1,0 +1,60 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:l4d2addon_installer.ViewModels"
+        xmlns:local="using:l4d2addon_installer.Views"
+        mc:Ignorable="d"
+        d:DesignHeight="500" d:DesignWidth="800"
+        Width="800" Height="500"
+        x:Class="l4d2addon_installer.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="vpk安装器"
+        WindowStartupLocation="CenterScreen">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Window.Styles>
+        <Style Selector="GridSplitter">
+            <Setter Property="Background" Value="#cacaca" />
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="darkgray" />
+            </Style>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="*,5,2*" x:Name="Container">
+        <!-- 窗口左边框 -->
+        <ContentControl Grid.Column="0" Content="{Binding VpkFileInfoViewModel}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate>
+                    <local:VpkFilesPanelView />
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+        <!-- 窗口右边框 -->
+        <Grid Grid.Column="2" RowDefinitions="75*,25*">
+            <ContentControl Grid.Row="0" Content="{Binding OperationPanelViewModel}">
+                <!-- 要向用户控件传递DataContext，记得通过ContentControl或者ItemsControl这类控件，向内传递 -->
+                <ContentControl.ContentTemplate>
+                    <DataTemplate>
+                        <local:OperationPanelView />
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+            <ContentControl Grid.Row="1" Content="{Binding LogsPanelViewModel}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate>
+                        <local:LogsPanelView />
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </Grid>
+    </Grid>
+</Window>

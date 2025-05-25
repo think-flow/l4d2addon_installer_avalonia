@@ -1,0 +1,104 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:l4d2addon_installer.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="l4d2addon_installer.Views.VpkFilesPanelView"
+             x:DataType="vm:VpkFilesPanelViewModel"
+             x:Name="Root">
+
+    <Design.DataContext>
+        <vm:VpkFilesPanelViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <Style Selector="ListBox.list">
+            <Setter Property="Background" Value="#f0f0f0" />
+            <Style Selector="^ ListBoxItem">
+                <Setter Property="BorderBrush" Value="#ccc" />
+                <Setter Property="BorderThickness" Value="0,1,0,0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Style Selector="^>TextBlock">
+                    <Setter Property="Padding" Value="10,9,12,12" />
+                </Style>
+            </Style>
+            <Style Selector="^ ListBoxItem:selected /template/ ContentPresenter">
+                <Setter Property="Background" Value="#d6e1ea" />
+            </Style>
+        </Style>
+
+        <Style Selector="Border.statistics">
+            <Setter Property="Padding" Value="10,0,0,0" />
+            <Setter Property="Background" Value="#f9f9f9" />
+            <Setter Property="BorderBrush" Value="#ccc" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Style Selector="^ TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontFamily" Value="serif, sans-serif" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+        </Style>
+
+        <Style Selector="ToolTip.fileProperty">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        BoxShadow="0 16 48 16 #05000000, 0 8 16 -8 #45000000"
+                        Background="#eeeded"
+                        CornerRadius="4"
+                        Padding="5" Margin="3">
+                        <ContentPresenter FontSize="12" FontFamily="serif, sans-serif"
+                                          Content="{TemplateBinding Content}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <!-- todo 更改ContextMenu的右键菜单样式 -->
+        <Style Selector="ContextMenu">
+            <!-- <Setter Property="Background" Value="red"></Setter> -->
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel>
+        <Border Classes="statistics" DockPanel.Dock="Bottom">
+            <Grid ColumnDefinitions="*,2*">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding VpkFiles.Count, StringFormat='{}{0}个文件'}" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding SelectedVpkFiles.Count, StringFormat='已选择{0}个文件'}" />
+            </Grid>
+        </Border>
+        <ListBox Classes="list scrollbar"
+                 SelectionMode="Multiple"
+                 ItemsSource="{Binding VpkFiles}"
+                 SelectedItems="{Binding SelectedVpkFiles}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:VpkFileInfoViewModel">
+                    <!-- 这里还是不能将ToolTip.Tip设置到border上 -->
+                    <!-- 不知为什么设置了background后，就能达成目的 -->
+                    <TextBlock TextWrapping="Wrap" Background="Transparent"
+                               Text="{Binding Name}"
+                               PointerExited="TextBlock_OnPointerExited"
+                               PointerEntered="TextBlock_OnPointerEntered">
+                        <TextBlock.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="复制文件名"
+                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).CopyFileNameCommand, FallbackValue={x:Null}}" />
+                                <MenuItem Header="文件管理器中打开"
+                                          IsVisible="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).CanRevealFile, FallbackValue={x:Null}}"
+                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).RevealFileCommand, FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <Separator />
+                                <MenuItem Header="删除"
+                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).DeleteFileCommand, FallbackValue={x:Null}}" />
+                            </ContextMenu>
+                        </TextBlock.ContextMenu>
+                    </TextBlock>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

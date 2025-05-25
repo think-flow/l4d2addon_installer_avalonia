@@ -1,0 +1,72 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:l4d2addon_installer.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="150"
+             x:Class="l4d2addon_installer.Views.LogsPanelView"
+             x:DataType="vm:LogsPanelViewModel">
+
+    <Design.DataContext>
+        <vm:LogsPanelViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <Style Selector="Border.logs">
+            <Setter Property="Background" Value="#f9f9f9" />
+            <Setter Property="Padding" Value="5,0,0,0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#dcdfe6" />
+
+            <Style Selector="^ TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontFamily" Value="serif, sans-serif" />
+                <Style Selector="^.time">
+                    <Setter Property="FontSize" Value="12" />
+                    <Setter Property="Foreground" Value="#808080c2" />
+                </Style>
+            </Style>
+
+            <Style Selector="^ SelectableTextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontFamily" Value="serif, sans-serif" />
+                <Setter Property="SelectionForegroundBrush" Value="White" />
+                <Style Selector="^.message">
+                    <Setter Property="FontSize" Value="13.5" />
+                    <Setter Property="Foreground" Value="#95000000" />
+                </Style>
+                <Style Selector="^.error">
+                    <Setter Property="FontSize" Value="13.5" />
+                    <Setter Property="Foreground" Value="#fe6666" />
+                </Style>
+            </Style>
+        </Style>
+
+        <!-- todo 更改SelectableTextBlock的右键菜单样式 -->
+        <Style Selector="MenuFlyoutPresenter">
+            <!-- <Setter Property="Background" Value="Red"></Setter> -->
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="logs">
+        <ScrollViewer Classes="scrollbar" x:Name="LogScrollViewer">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding Logs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel>
+                                <TextBlock Classes="time" DockPanel.Dock="Left" Text="{Binding Time,Mode=OneTime}" />
+                                <Panel Margin="0,0,10,0" DockPanel.Dock="Left" />
+                                <SelectableTextBlock Text="{Binding Message,Mode=OneTime}"
+                                                     Classes.message="{Binding IsMessage,Mode=OneTime}"
+                                                     Classes.error="{Binding !IsMessage,Mode=OneTime}" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

@@ -1,0 +1,426 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using l4d2addon_installer.Models;
+using l4d2addon_installer.ViewModels;
+using Microsoft.Win32;
+
+namespace l4d2addon_installer.Services;
+
+public partial class VpkFileService
+{
+    public delegate void VpkFileCreatedDelegate(string fullPath);
+
+    public delegate void VpkFileDeletedDelegate(string fullPath);
+
+    public delegate void VpkFileRenamedDelegate(string oldFullPath, string newFullPath);
+
+    private readonly LoggerService _logger;
+    private string? _addonPath;
+
+    private FileSystemWatcher? _fileWatcher;
+    private string? _gamePath;
+    private string? _steamPath;
+
+    public VpkFileService(LoggerService logger)
+    {
+        _logger = logger;
+        WatcherAddons(GetAddonsPath());
+    }
+
+    /// <summary>
+    /// Addons文件夹，vpk文件新增通知。
+    /// </summary>
+    public VpkFileCreatedDelegate? OnVpkFileCreatedHandler { get; set; }
+
+    /// <summary>
+    /// Addons文件夹，vpk文件删除通知。
+    /// </summary>
+    public VpkFileDeletedDelegate? OnVpkFileDeletedHandler { get; set; }
+
+    /// <summary>
+    /// Addons文件夹，vpk文件重命名通知。
+    /// </summary>
+    public VpkFileRenamedDelegate? OnVpkFileRenamedHandler { get; set; }
+
+    /// <summary>
+    /// 在文件管理器中显示文件
+    /// </summary>
+    /// <param name="fileInfo"></param>
+    /// <exception cref="ServiceException"></exception>
+    public async Task RevealFileAsync(VpkFileInfoViewModel fileInfo)
+    {
+        int exitCode;
+        try
+        {
+            exitCode = await Task.Run(() =>
+            {
+                var process = Process.Start("explorer.exe", $"/select, \"{fileInfo.Path}\"");
+                process.WaitForExit();
+                //进程退出代码如果不是1的话，代表explorer执行出错，我们返回false通知调用人员，代码是否执行成功
+                return process.ExitCode;
+            });
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException("explorer执行出错: " + e.Message, e);
+        }
+
+        if (exitCode != 1) throw new ServiceException($"VpkFileService.RevealFileAsync returned exit code [{exitCode}]");
+    }
+
+    /// <summary>
+    /// 获取 Left 4 Dead 2 的vpk文件信息
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ServiceException"></exception>
+    public async Task<List<VpkFileInfo>> GetVpkFilesAsync()
+    {
+        string addonsPath = GetAddonsPath();
+        string[] vpkFilePaths = Directory.GetFiles(addonsPath, "*.vpk", SearchOption.TopDirectoryOnly);
+
+        var list = new List<VpkFileInfo>(vpkFilePaths.Length);
+        foreach (string vpkFilePath in vpkFilePaths)
+        {
+            var vpkFileInfo = await GetVpkFileAsync(vpkFilePath);
+            list.Add(vpkFileInfo);
+        }
+
+        return list;
+    }
+
+    /// <summary>
+    /// 获取 Left 4 Dead 2 的vpk文件信息
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ServiceException"></exception>
+    public Task<VpkFileInfo> GetVpkFileAsync(string vpkFilePath)
+    {
+        return Task.Run(() =>
+        {
+            FileInfo fileInfo;
+            try
+            {
+                fileInfo = new FileInfo(vpkFilePath);
+            }
+            catch (Exception e)
+            {
+                throw new ServiceException($"未能读取{{vpkFilePath}}文件信息：{e.Message}", e);
+            }
+
+            var vpkFileInfo = new VpkFileInfo
+            {
+                Name = fileInfo.Name,
+                NameWithoutEx = fileInfo.Name.Substring(0, fileInfo.Name.Length - fileInfo.Extension.Length),
+                CreationTime = fileInfo.CreationTime,
+                ModifiedTime = fileInfo.LastWriteTime,
+                FullPath = fileInfo.FullName,
+                Size = fileInfo.Length
+            };
+            return vpkFileInfo;
+        });
+    }
+
+    /// <summary>
+    /// 删除vpk文件
+    /// </summary>
+    /// <param name="fileInfos"></param>
+    /// <param name="toTrash">是否移动到回收站</param>
+    /// <exception cref="AggregateException"></exception>
+    public Task DeleteVpkFilesAsync(IEnumerable<VpkFileInfoViewModel> fileInfos, bool toTrash)
+    {
+        return Task.Run(() =>
+        {
+            var exceptions = new List<ServiceException>();
+            if (toTrash)
+            {
+                //将文件移到回收站
+                foreach (var fileInfo in fileInfos)
+                {
+                    try
+                    {
+                        RecycleBinHelper.DeleteToRecycleBin(fileInfo.Path);
+                        _logger.LogMessage($"{fileInfo.Name} 已成功移至回收站");
+                    }
+                    catch (Exception e)
+                    {
+                        exceptions.Add(new ServiceException($"文件移至回收站时出错：{e.Message}", e));
+                    }
+                }
+            }
+            else
+            {
+                //直接删除文件
+                foreach (var fileInfo in fileInfos)
+                {
+                    try
+                    {
+                        File.Delete(fileInfo.Path);
+                        _logger.LogMessage($"{fileInfo.Name} 删除成功");
+                    }
+                    catch (Exception e)
+                    {
+                        exceptions.Add(new ServiceException($"文件删除时出错：{e.Message}", e));
+                    }
+                }
+            }
+
+            if (exceptions.Count > 0) throw new AggregateException(exceptions);
+        });
+    }
+
+    /// <summary>
+    /// 安装vpk文件 支持.vpk .zip .rar
+    /// </summary>
+    /// <param name="filePaths"></param>
+    /// <returns></returns>
+    /// <exception cref="AggregateException"></exception>
+    public Task InstallVpkFilesAsync(IEnumerable<string> filePaths) => throw new NotImplementedException();
+
+    /// <summary>
+    /// 获取Steam路径
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ServiceException"></exception>
+    public string GetSteamPath()
+    {
+        if (_steamPath != null) return _steamPath;
+
+        try
+        {
+            // 打开HKEY_CURRENT_USER下的Steam注册表项
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam");
+            if (key != null)
+            {
+                // 读取SteamPath的值
+                string? value = key.GetValue("SteamPath")?.ToString();
+                if (value != null)
+                {
+                    _steamPath = value;
+                    return value;
+                }
+            }
+
+            throw new ServiceException("未找到Steam安装路径");
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException("读取注册表出错: " + e.Message, e);
+        }
+    }
+
+    /// <summary>
+    /// 获取 Left 4 Dead 2 的安装路径
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ServiceException"></exception>
+    public string GetGamePath()
+    {
+        if (_gamePath != null) return _gamePath;
+
+        string steamPath = GetSteamPath();
+        string libraryFoldersVDFFilePath = Path.Join(steamPath, "steamapps", "libraryfolders.vdf");
+        if (!File.Exists(libraryFoldersVDFFilePath))
+        {
+            throw new ServiceException($"未找到 {libraryFoldersVDFFilePath} 文件");
+        }
+
+        //解析 libraryfolders.vdf 文件
+        string vdfContent = File.ReadAllText(libraryFoldersVDFFilePath);
+        var matches = Regex.Matches(vdfContent, """ "path"\s+"([^"]+)" """);
+        string[] libraryFolders = matches.Select(match => match.Groups[1].Value).ToArray();
+
+        foreach (string folder in libraryFolders)
+        {
+            string gamePath = Path.Join(folder, "steamapps", "common", "Left 4 Dead 2");
+            if (Directory.Exists(gamePath))
+            {
+                _gamePath = gamePath;
+                return gamePath;
+            }
+        }
+
+        //未能在vdf指定的steamapps下找到Left 4 Dead 2文件夹
+        //则回退到默认的steamapps目录下寻找
+        string defaultGamePath = Path.Join(steamPath, "steamapps", "common", "Left 4 Dead 2");
+        if (Directory.Exists(defaultGamePath))
+        {
+            _gamePath = defaultGamePath;
+            return defaultGamePath;
+        }
+
+        //如果还是没找到则抛出异常
+        throw new ServiceException("未找到 Left 4 Dead 2 的安装路径");
+    }
+
+    /// <summary>
+    /// 获取 Left 4 Dead 2 的 addons 文件夹路径
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ServiceException"></exception>
+    public string GetAddonsPath()
+    {
+        if (_addonPath != null) return _addonPath;
+
+        string gamePath = GetGamePath();
+        string addonsPath = Path.Join(gamePath, "left4dead2", "addons");
+        if (!Directory.Exists(addonsPath))
+        {
+            throw new ServiceException("未找到 Addons 文件夹路径");
+        }
+
+        _addonPath = addonsPath;
+        return addonsPath;
+    }
+
+    //监听文件夹中，文件的新增和删除
+    private void WatcherAddons(string path)
+    {
+        _fileWatcher = new FileSystemWatcher(path, "*.vpk");
+        _fileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName;
+        _fileWatcher.IncludeSubdirectories = false;
+        _fileWatcher.EnableRaisingEvents = true;
+
+        _fileWatcher.Created += (_, e) =>
+        {
+            Debug.WriteLine("Created: " + e.Name);
+            OnVpkFileCreatedHandler?.Invoke(e.FullPath);
+        };
+
+        _fileWatcher.Deleted += (_, e) =>
+        {
+            Debug.WriteLine("Deleted: " + e.Name);
+            OnVpkFileDeletedHandler?.Invoke(e.FullPath);
+        };
+
+        _fileWatcher.Renamed += (_, e) =>
+        {
+            Debug.WriteLine("Renamed: " + e.Name);
+            OnVpkFileRenamedHandler?.Invoke(e.OldFullPath, e.FullPath);
+        };
+
+        _fileWatcher.Error += (_, e) =>
+        {
+            var ex = e.GetException();
+            _logger.LogError("[Addons Watcher发生错误] " + ex.Message);
+            _fileWatcher.Dispose();
+            _fileWatcher = null;
+        };
+    }
+
+    //删除文件到回收站，帮助类
+    private static partial class RecycleBinHelper
+    {
+        /// <summary>
+        /// 将文件移动到回收站
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <exception cref="IOException"></exception>
+        public static void DeleteToRecycleBin(string filePath)
+        {
+            var fileop = new SHFILEOPSTRUCT
+            {
+                wFunc = FO_DELETE,
+                pFrom = filePath + '\0' + '\0', // 必须双终止符
+                fFlags = FOF_ALLOWUNDO | FOF_NO_UI,
+                fAnyOperationsAborted = false,
+                hwnd = IntPtr.Zero,
+                pTo = null!,
+                hNameMappings = IntPtr.Zero,
+                lpszProgressTitle = null!
+            };
+
+            int result = SHFileOperationW(ref fileop);
+            if (result != 0)
+            {
+                throw new IOException($"Failed to move file to recycle bin. Error code: {result}");
+            }
+        }
+
+        #region RecycleBinHelper 核心
+
+        private const int FO_DELETE = 3;
+        private const int FOF_ALLOWUNDO = 0x40;
+        private const int FOF_NO_UI = 0x0614; // FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI
+
+        [LibraryImport("shell32.dll", SetLastError = true)]
+        private static partial int SHFileOperationW(ref SHFILEOPSTRUCT lpFileOp);
+
+        [NativeMarshalling(typeof(SHFILEOPSTRUCTMarshaller))]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct SHFILEOPSTRUCT
+        {
+            public nint hwnd;
+            public int wFunc;
+            public string? pFrom;
+            public string? pTo;
+            public ushort fFlags;
+            public bool fAnyOperationsAborted;
+            public nint hNameMappings;
+            public string? lpszProgressTitle;
+        }
+
+        //SHFILEOPSTRUCT 结构体的封送程序
+        [CustomMarshaller(typeof(SHFILEOPSTRUCT), MarshalMode.ManagedToUnmanagedRef, typeof(SHFILEOPSTRUCTMarshaller))]
+        private static class SHFILEOPSTRUCTMarshaller
+        {
+            // 将托管结构转换为非托管内存
+            public static SHFILEOPSTRUCT_Unmanaged ConvertToUnmanaged(SHFILEOPSTRUCT managed) =>
+                new()
+                {
+                    hwnd = managed.hwnd,
+                    wFunc = managed.wFunc,
+                    pFrom = Marshal.StringToHGlobalUni(managed.pFrom), // 转换为双 null 终止的 Unicode 字符串
+                    pTo = Marshal.StringToHGlobalUni(managed.pTo),
+                    fFlags = managed.fFlags,
+                    fAnyOperationsAborted = managed.fAnyOperationsAborted,
+                    hNameMappings = managed.hNameMappings,
+                    lpszProgressTitle = Marshal.StringToHGlobalUni(managed.lpszProgressTitle)
+                };
+
+            // 释放非托管内存
+            public static void Free(SHFILEOPSTRUCT_Unmanaged unmanaged)
+            {
+                Marshal.FreeHGlobal(unmanaged.pFrom);
+                Marshal.FreeHGlobal(unmanaged.pTo);
+                Marshal.FreeHGlobal(unmanaged.lpszProgressTitle);
+            }
+
+            // 非托管到托管转换
+            public static SHFILEOPSTRUCT ConvertToManaged(SHFILEOPSTRUCT_Unmanaged unmanaged) =>
+                new()
+                {
+                    hwnd = unmanaged.hwnd,
+                    wFunc = unmanaged.wFunc,
+                    pFrom = Marshal.PtrToStringUni(unmanaged.pFrom) ?? null,
+                    pTo = Marshal.PtrToStringUni(unmanaged.pTo) ?? null,
+                    fFlags = unmanaged.fFlags,
+                    fAnyOperationsAborted = unmanaged.fAnyOperationsAborted,
+                    hNameMappings = unmanaged.hNameMappings,
+                    lpszProgressTitle = Marshal.PtrToStringUni(unmanaged.lpszProgressTitle) ?? null
+                };
+
+            // 非托管结构体定义（严格匹配 Win32 的 SHFILEOPSTRUCTW）
+            [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+            public struct SHFILEOPSTRUCT_Unmanaged
+            {
+                public nint hwnd;
+                public int wFunc;
+                public nint pFrom;
+                public nint pTo;
+                public ushort fFlags;
+                public bool fAnyOperationsAborted;
+                public nint hNameMappings;
+                public nint lpszProgressTitle;
+            }
+        }
+
+        #endregion
+    }
+}
