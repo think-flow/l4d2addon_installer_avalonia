@@ -1,0 +1,103 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="l4d2addon_installer.Views.MessageBoxView">
+
+    <UserControl.Resources>
+        <Color x:Key="ErrorTextColor">#f56c6c</Color>
+        <Color x:Key="SuccessTextColor">#67c23a</Color>
+        <x:Double x:Key="FontSize">14</x:Double>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="StackPanel Border">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Padding" Value="15,8" />
+            <Setter Property="Margin" Value="0,15,0,0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+
+            <Style Selector="^ StackPanel">
+                <Setter Property="Orientation" Value="Horizontal" />
+                <Setter Property="Spacing" Value="8" />
+            </Style>
+
+            <Style Selector="^ SelectableTextBlock">
+                <Setter Property="FontFamily" Value="Microsoft YaHei" />
+                <Setter Property="FontSize" Value="{StaticResource FontSize}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="SelectionForegroundBrush" Value="White" />
+            </Style>
+        </Style>
+
+        <!-- StackPanel Border.success 消息框，成功样式 -->
+        <Style Selector="StackPanel Border.success">
+            <Setter Property="BorderBrush" Value="#f0f9eb" />
+            <Setter Property="Background" Value="#e1f3d8" />
+
+            <Style Selector="^ SelectableTextBlock">
+                <Setter Property="Foreground" Value="{StaticResource SuccessTextColor}" />
+            </Style>
+
+            <Style Selector="^ Path">
+                <Setter Property="Data"
+                        Value="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896m-55.808 536.384-99.52-99.584a38.4 38.4 0 1 0-54.336 54.336l126.72 126.72a38.272 38.272 0 0 0 54.336 0l262.4-262.464a38.4 38.4 0 1 0-54.272-54.336z" />
+                <Setter Property="Fill" Value="{StaticResource SuccessTextColor}" />
+                <Setter Property="Stretch" Value="Uniform" />
+                <Setter Property="Width" Value="{StaticResource FontSize}" />
+                <Setter Property="Height" Value="{StaticResource FontSize}" />
+            </Style>
+        </Style>
+
+        <!-- StackPanel Border.success 消息框，失败样式 -->
+        <Style Selector="StackPanel Border.error">
+            <Setter Property="BorderBrush" Value="#fde2e2" />
+            <Setter Property="Background" Value="#fef0f0" />
+
+            <Style Selector="^ SelectableTextBlock">
+                <Setter Property="Foreground" Value="{StaticResource ErrorTextColor}" />
+            </Style>
+
+            <Style Selector="^ Path">
+                <Setter Property="Data"
+                        Value="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896m0 393.664L407.936 353.6a38.4 38.4 0 1 0-54.336 54.336L457.664 512 353.6 616.064a38.4 38.4 0 1 0 54.336 54.336L512 566.336 616.064 670.4a38.4 38.4 0 1 0 54.336-54.336L566.336 512 670.4 407.936a38.4 38.4 0 1 0-54.336-54.336z" />
+                <Setter Property="Fill" Value="{StaticResource ErrorTextColor}" />
+                <Setter Property="Stretch" Value="Uniform" />
+                <Setter Property="Width" Value="{StaticResource FontSize}" />
+                <Setter Property="Height" Value="{StaticResource FontSize}" />
+            </Style>
+        </Style>
+
+        <!-- StackPanel Border 过渡效果 -->
+        <Style Selector="StackPanel Border">
+            <Setter Property="RenderTransform" Value="translateY(-20px)" />
+            <Setter Property="IsVisible" Value="True" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.7" />
+                    <BoolTransition Property="IsVisible" Duration="0:0:0.5" />
+                </Transitions>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel x:Name="MsgBox" x:FieldModifier="private">
+        <!-- <Border Classes="success" Opacity="1"> -->
+        <!--     <StackPanel> -->
+        <!--         <Path /> -->
+        <!--         <SelectableTextBlock>删除成功</SelectableTextBlock> -->
+        <!--     </StackPanel> -->
+        <!-- </Border> -->
+        <!-- <Border Classes="error" Opacity="1"> -->
+        <!--     <StackPanel> -->
+        <!--         <Path /> -->
+        <!--         <SelectableTextBlock>只支持 vpk zip rar 文件</SelectableTextBlock> -->
+        <!--     </StackPanel> -->
+        <!-- </Border> -->
+    </StackPanel>
+</UserControl>

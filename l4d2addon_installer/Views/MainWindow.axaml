@@ -28,33 +28,36 @@
         </Style>
     </Window.Styles>
 
-    <Grid ColumnDefinitions="*,5,2*" x:Name="Container">
-        <!-- 窗口左边框 -->
-        <ContentControl Grid.Column="0" Content="{Binding VpkFileInfoViewModel}">
-            <ContentControl.ContentTemplate>
-                <DataTemplate>
-                    <local:VpkFilesPanelView />
-                </DataTemplate>
-            </ContentControl.ContentTemplate>
-        </ContentControl>
-        <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
-        <!-- 窗口右边框 -->
-        <Grid Grid.Column="2" RowDefinitions="75*,25*">
-            <ContentControl Grid.Row="0" Content="{Binding OperationPanelViewModel}">
-                <!-- 要向用户控件传递DataContext，记得通过ContentControl或者ItemsControl这类控件，向内传递 -->
+    <Grid>
+        <local:MessageBoxView/>
+        <Grid ColumnDefinitions="*,5,2*" x:Name="Container" ZIndex="-2000">
+            <!-- 窗口左边框 -->
+            <ContentControl Grid.Column="0" Content="{Binding VpkFileInfoViewModel}">
                 <ContentControl.ContentTemplate>
                     <DataTemplate>
-                        <local:OperationPanelView />
+                        <local:VpkFilesPanelView />
                     </DataTemplate>
                 </ContentControl.ContentTemplate>
             </ContentControl>
-            <ContentControl Grid.Row="1" Content="{Binding LogsPanelViewModel}">
-                <ContentControl.ContentTemplate>
-                    <DataTemplate>
-                        <local:LogsPanelView />
-                    </DataTemplate>
-                </ContentControl.ContentTemplate>
-            </ContentControl>
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+            <!-- 窗口右边框 -->
+            <Grid Grid.Column="2" RowDefinitions="75*,25*">
+                <ContentControl Grid.Row="0" Content="{Binding OperationPanelViewModel}">
+                    <!-- 要向用户控件传递DataContext，记得通过ContentControl或者ItemsControl这类控件，向内传递 -->
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate>
+                            <local:OperationPanelView />
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+                <ContentControl Grid.Row="1" Content="{Binding LogsPanelViewModel}">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate>
+                            <local:LogsPanelView />
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
