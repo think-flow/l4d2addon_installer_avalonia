@@ -40,6 +40,31 @@
                 </Style>
             </Style>
         </Style>
+
+        <!-- primary 按钮样式 -->
+        <Style Selector="Button.button-primary">
+            <Setter Property="Foreground" Value="#409eff" />
+            <Setter Property="Background" Value="#ecf5ff" />
+            <Setter Property="BorderBrush" Value="#a0cfff" />
+
+            <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#409eff" />
+                <Setter Property="BorderBrush" Value="#409eff" />
+                <Setter Property="Foreground" Value="White" />
+            </Style>
+
+            <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#337ecc" />
+                <Setter Property="BorderBrush" Value="#337ecc" />
+                <Setter Property="Foreground" Value="White" />
+            </Style>
+
+            <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#a0cfff" />
+                <Setter Property="BorderBrush" Value="#a0cfff" />
+                <Setter Property="Foreground" Value="White" />
+            </Style>
+        </Style>
     </Application.Styles>
 
     <Application.Resources>

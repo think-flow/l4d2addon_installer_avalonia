@@ -13,7 +13,10 @@
 
     <UserControl.Styles>
         <Style Selector="WrapPanel.top">
-            <Setter Property="Margin" Value="2,0,0,0" />
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Margin" Value="2,2,0,0" />
+            <Setter Property="LineSpacing" Value="5" />
+            <Setter Property="ItemSpacing" Value="5" />
         </Style>
 
         <Style Selector="Panel.bottom">
@@ -40,50 +43,51 @@
                     <Setter Property="Foreground" Value="#808080" />
                 </Style>
             </Style>
+        </Style>
 
-            <Style Selector="^ Panel.loading-mask">
-                <Setter Property="ZIndex" Value="2000" />
-                <Setter Property="Background">
-                    <SolidColorBrush Color="White" Opacity="0.9" />
-                </Setter>
-                <Style Selector="^:pointerover">
-                    <Setter Property="Cursor" Value="Arrow" />
-                </Style>
+        <!-- loading 遮罩层 -->
+        <Style Selector="Panel.bottom Panel.loading-mask">
+            <Setter Property="ZIndex" Value="2000" />
+            <Setter Property="Background">
+                <SolidColorBrush Color="White" Opacity="0.9" />
+            </Setter>
+            <Style Selector="^:pointerover">
+                <Setter Property="Cursor" Value="Arrow" />
+            </Style>
 
-                <!-- 加载动画-样式 -->
-                <Style Selector="^ Canvas.circular">
+            <!-- loading 动画样式 -->
+            <Style Selector="^ Canvas.circular">
+                <Style.Animations>
+                    <Animation Duration="0:0:2" IterationCount="Infinite" Easing="LinearEasing">
+                        <KeyFrame Cue="100%">
+                            <Setter Property="RotateTransform.Angle" Value="360" />
+                        </KeyFrame>
+                    </Animation>
+                </Style.Animations>
+
+                <Style Selector="^ Ellipse.path">
                     <Style.Animations>
-                        <Animation Duration="0:0:2" IterationCount="Infinite" Easing="LinearEasing">
+                        <Animation Duration="0:0:1.5" IterationCount="Infinite" Easing="SineEaseInOut">
+                            <KeyFrame Cue="0%">
+                                <Setter Property="StrokeDashOffset" Value="0" />
+                            </KeyFrame>
                             <KeyFrame Cue="100%">
-                                <Setter Property="RotateTransform.Angle" Value="360" />
+                                <Setter Property="StrokeDashOffset" Value="120" />
                             </KeyFrame>
                         </Animation>
                     </Style.Animations>
-
-                    <Style Selector="^ Ellipse.path">
-                        <Style.Animations>
-                            <Animation Duration="0:0:1.5" IterationCount="Infinite" Easing="SineEaseInOut">
-                                <KeyFrame Cue="0%">
-                                    <Setter Property="StrokeDashOffset" Value="0" />
-                                </KeyFrame>
-                                <KeyFrame Cue="100%">
-                                    <Setter Property="StrokeDashOffset" Value="120" />
-                                </KeyFrame>
-                            </Animation>
-                        </Style.Animations>
-                    </Style>
                 </Style>
             </Style>
         </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="50*,50*">
-        <WrapPanel Classes="top" Grid.Row="0" Orientation="Horizontal">
-            <Button Command="{Binding OpenAddonsFloderCommand}">addons文件夹</Button>
-            <Button Command="{Binding OpenGameFolderCommand}">l4d2文件夹</Button>
-            <Button Command="{Binding OpenDownloadsFolderCommand}">下载文件夹</Button>
-            <Button Command="{Binding OpenRecycleBinFolderCommand}">打开回收站</Button>
-            <Button Command="{Binding StartGameCommand}">启动游戏</Button>
+        <WrapPanel Classes="top" Grid.Row="0">
+            <Button Classes="button-primary" Command="{Binding OpenAddonsFloderCommand}">addons文件夹</Button>
+            <Button Classes="button-primary" Command="{Binding OpenGameFolderCommand}">l4d2文件夹</Button>
+            <Button Classes="button-primary" Command="{Binding OpenDownloadsFolderCommand}">下载文件夹</Button>
+            <Button Classes="button-primary" Command="{Binding OpenRecycleBinFolderCommand}">打开回收站</Button>
+            <Button Classes="button-primary" Command="{Binding StartGameCommand}">启动游戏</Button>
             <!-- <Button>关于</Button> -->
         </WrapPanel>
 
@@ -93,7 +97,7 @@
                 <TextBlock>此区域安装vpk</TextBlock>
             </Panel>
             <Canvas>
-                <!-- todo 按钮样式 -->
+                <!-- todo ToggleButton按钮样式 -->
                 <ToggleButton Canvas.Top="5" Canvas.Right="10">lkjlssadf</ToggleButton>
             </Canvas>
             <Panel Classes="loading-mask" IsVisible="{Binding ShowLoading}">
