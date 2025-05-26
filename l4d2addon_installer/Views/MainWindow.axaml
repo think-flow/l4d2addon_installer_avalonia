@@ -29,7 +29,7 @@
     </Window.Styles>
 
     <Grid>
-        <local:MessageBoxView/>
+        <local:MessageBoxView />
         <Grid ColumnDefinitions="*,5,2*" x:Name="Container" ZIndex="-2000">
             <!-- 窗口左边框 -->
             <ContentControl Grid.Column="0" Content="{Binding VpkFileInfoViewModel}">

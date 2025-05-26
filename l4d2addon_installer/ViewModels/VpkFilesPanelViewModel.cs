@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using l4d2addon_installer.Collections.ObjectModel;
 using l4d2addon_installer.Models;
 using l4d2addon_installer.Services;
+using l4d2addon_installer.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace l4d2addon_installer.ViewModels;
@@ -96,10 +97,12 @@ public partial class VpkFilesPanelViewModel : ServiceViewModelBase
         if (SelectedVpkFiles.Count <= 0) return;
 
         bool toTrash = true;
+        bool isSuccessd = true;
         await _vpkFileService.DeleteVpkFilesAsync(SelectedVpkFiles.ToArray(), toTrash, (msg, ex) =>
         {
             if (ex is not null)
             {
+                Message.Success("删除失败");
                 foreach (var inner in ex.InnerExceptions)
                 {
                     _logger.LogError(inner.Message);
@@ -113,6 +116,14 @@ public partial class VpkFilesPanelViewModel : ServiceViewModelBase
                 _logger.LogMessage(msg);
             }
         });
+        if (isSuccessd)
+        {
+            Message.Success("删除成功");
+        }
+        else
+        {
+            Message.Error("删除失败，请查看日志");
+        }
     }
 
     /// <summary>

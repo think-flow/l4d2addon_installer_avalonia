@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -9,7 +10,7 @@ using Avalonia.Threading;
 
 namespace l4d2addon_installer.Views;
 
-public partial class MessageBoxView : UserControl
+public partial class MessageBoxView : Message
 {
     //消息框存活时长 （毫秒）
     private const int LifeTime = 3 * 1000;
@@ -19,8 +20,10 @@ public partial class MessageBoxView : UserControl
     public MessageBoxView()
     {
         InitializeComponent();
+        Initialize(this);
     }
 
+    /*
     /// <summary>
     /// 弹出Success样式的消息框
     /// </summary>
@@ -30,8 +33,9 @@ public partial class MessageBoxView : UserControl
     /// 弹出Error样式的消息框
     /// </summary>
     public void Error(string message) => ShowMsg("error", message);
+    */
 
-    private void ShowMsg(string @class, string message)
+    protected override void ShowMsg(string @class, string message)
     {
         var border = new Border
         {
@@ -58,7 +62,7 @@ public partial class MessageBoxView : UserControl
         // 触发opacity的过渡动画
         border.Opacity = 1;
         border.RenderTransform = TransformOperations.Parse("translateY(0px)");
-        
+
         RemoveBorderAfterLiveTime(border);
     }
 
@@ -99,4 +103,34 @@ public partial class MessageBoxView : UserControl
             Dispatcher.UIThread.Post(() => MsgBox.Children.Remove(border));
         }, tokenSource.Token);
     }
+}
+
+public abstract class Message : UserControl
+{
+    private static Message? _source;
+
+    protected static void Initialize(Message source)
+    {
+        _source = source;
+    }
+
+    /// <summary>
+    /// 弹出Success样式的消息框
+    /// </summary>
+    public static void Success(string message)
+    {
+        if (_source is null) throw new InvalidOperationException("MessageBoxView is not initialized");
+        Dispatcher.UIThread.Post(() => _source.ShowMsg("success", message));
+    }
+
+    /// <summary>
+    /// 弹出Error样式的消息框
+    /// </summary>
+    public static void Error(string message)
+    {
+        if (_source is null) throw new InvalidOperationException("MessageBoxView is not initialized");
+        Dispatcher.UIThread.Post(() => _source.ShowMsg("error", message));
+    }
+
+    protected abstract void ShowMsg(string @class, string message);
 }

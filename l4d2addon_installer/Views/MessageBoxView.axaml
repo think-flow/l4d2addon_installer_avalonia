@@ -79,7 +79,7 @@
             <Setter Property="Transitions">
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.5" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.7" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" />
                     <BoolTransition Property="IsVisible" Duration="0:0:0.5" />
                 </Transitions>
             </Setter>

@@ -65,7 +65,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
             bool result = _extensions.Any(t => t.Equals(extension, StringComparison.OrdinalIgnoreCase));
             if (!result)
             {
-                //todo 弹窗提示
+                Message.Error($"只支持 {_extensions.Aggregate((pv, cv) => pv + ' ' + cv)} 文件");
                 return;
             }
         }
@@ -84,11 +84,13 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
         bool isCoverd = DataContext.IsCoverd;
         var vpkFileService = Provider.GetRequiredService<VpkFileService>();
 
+        bool isSuccessd = true;
         //并行安装文件
         await vpkFileService.InstallVpkFilesAsync(filePaths, isCoverd, (msg, ex) =>
         {
             if (ex is not null)
             {
+                isSuccessd = false;
                 foreach (var inner in ex.InnerExceptions)
                 {
                     logger.LogError(inner.Message);
@@ -102,6 +104,14 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
                 logger.LogMessage(msg);
             }
         });
+        if (isSuccessd)
+        {
+            Message.Success("安装成功");
+        }
+        else
+        {
+            Message.Error("安装失败，请查看日志");
+        }
 
         DataContext.ShowLoading = false;
     }
