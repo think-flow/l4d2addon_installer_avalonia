@@ -45,8 +45,8 @@
             </Style>
         </Style>
 
-        <!-- loading 遮罩层 -->
-        <Style Selector="Panel.bottom Panel.loading-mask">
+        <!-- loading 遮罩层  为了避免无限动画导致的内存泄漏，需要更细致的IsVisible=True选择器-->
+        <Style Selector="Panel.bottom Panel[IsVisible=True].loading-mask">
             <Setter Property="ZIndex" Value="2000" />
             <Setter Property="Background">
                 <SolidColorBrush Color="White" Opacity="0.9" />
