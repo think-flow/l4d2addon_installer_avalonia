@@ -56,9 +56,18 @@
             </Setter>
         </Style>
 
-        <!-- todo 更改ContextMenu的右键菜单样式 -->
         <Style Selector="ContextMenu">
-            <!-- <Setter Property="Background" Value="red"></Setter> -->
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontFamily" Value="serif, sans-serif" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Style Selector="^ /template/ Border">
+                <Setter Property="BoxShadow" Value="0 0 10 0 #25000000" />
+                <Setter Property="Margin" Value="5" />
+            </Style>
+
+            <Style Selector="^ Separator">
+                <Setter Property="Margin" Value="0,4,0,4" />
+            </Style>
         </Style>
     </UserControl.Styles>
 

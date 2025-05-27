@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="l4d2addon_installer.App"
              xmlns:local="using:l4d2addon_installer"
-             xmlns:system="clr-namespace:System;assembly=System.Runtime"
              RequestedThemeVariant="Default">
     <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
@@ -66,8 +65,4 @@
             </Style>
         </Style>
     </Application.Styles>
-
-    <Application.Resources>
-        <system:String x:Key="StringTextFlyoutCopyText">复制</system:String>
-    </Application.Resources>
 </Application>

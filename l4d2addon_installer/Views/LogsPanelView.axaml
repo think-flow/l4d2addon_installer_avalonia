@@ -11,6 +11,14 @@
         <vm:LogsPanelViewModel />
     </Design.DataContext>
 
+    <UserControl.Resources>
+        <MenuFlyout x:Key="SelectableTextBlockContextFlyout" Placement="Bottom">
+            <MenuItem Header="复制" Command="{Binding $parent[SelectableTextBlock].Copy}"
+                      IsEnabled="{Binding $parent[SelectableTextBlock].CanCopy}"
+                      InputGesture="{x:Static TextBox.CopyGesture}" />
+        </MenuFlyout>
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <Style Selector="Border.logs">
             <Setter Property="Background" Value="#f9f9f9" />
@@ -44,9 +52,21 @@
             </Style>
         </Style>
 
-        <!-- todo 更改SelectableTextBlock的右键菜单样式 -->
-        <Style Selector="MenuFlyoutPresenter">
-            <!-- <Setter Property="Background" Value="Red"></Setter> -->
+        <Style Selector="SelectableTextBlock">
+            <Style Selector="^ MenuFlyoutPresenter">
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="FontSize" Value="13.5" />
+                <Setter Property="FontFamily" Value="serif, sans-serif" />
+                <Style Selector="^ /template/ Border#LayoutRoot">
+                    <Setter Property="Margin" Value="5" />
+                    <Setter Property="BoxShadow" Value="0 0 10 0 #25000000" />
+                </Style>
+            </Style>
+
+            <Style Selector="^[IsEnabled=True]">
+                <Setter Property="Cursor" Value="IBeam" />
+                <Setter Property="ContextFlyout" Value="{StaticResource SelectableTextBlockContextFlyout}" />
+            </Style>
         </Style>
     </UserControl.Styles>
 
