@@ -20,7 +20,7 @@ internal sealed partial class Program
         catch (Exception e)
         {
             //在此捕获全局异常
-            NativeMessageBox.ShowError(e.Message, "Error");
+            NativeMessageBox.ShowError(e.ToString(), "Error");
         }
     }
 

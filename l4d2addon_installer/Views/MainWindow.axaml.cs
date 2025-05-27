@@ -1,6 +1,8 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Reactive;
 using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +11,12 @@ namespace l4d2addon_installer.Views;
 
 public partial class MainWindow : Window
 {
-    private const double MIN_PERCENTAGE_BASE = 0.1;
-    private const double MAX_PERCENTAGE_BASE = 0.7;
+    private const double MinPercentageBase = 0.1;
+    private const double MaxPercentageBase = 0.7;
     private bool _isLoaded;
+
+    //记录窗口状态变化的前一个状态
+    private WindowState _preWindowState = WindowState.Normal;
 
     public MainWindow()
     {
@@ -21,9 +26,27 @@ public partial class MainWindow : Window
         SizeChanged += OnSizeChanged;
         Loaded += OnLoaded;
         Closing += OnClosing;
+        this.GetObservable(WindowStateProperty).Subscribe(new AnonymousObserver<WindowState>(OnStateChanged));
     }
 
     public IServiceProvider Provider { get; init; } = null!;
+
+    //监听窗口的状态
+    private void OnStateChanged(WindowState state)
+    {
+        if (state == WindowState.Minimized)
+        {
+            // 最小化窗口时，启用EcoQos
+            EcoQosProcess.EnableEcoQos();
+        }
+        else if (_preWindowState == WindowState.Minimized)
+        {
+            // 当由最小化变为其他状态时，禁用EcoQos
+            EcoQosProcess.DisableEcoQos();
+        }
+
+        _preWindowState = state;
+    }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
@@ -67,8 +90,8 @@ public partial class MainWindow : Window
         }
 
         //限制left最大和最小范围 10%-70%
-        leftCol.MinWidth = newWindowWidth * MIN_PERCENTAGE_BASE;
-        leftCol.MaxWidth = newWindowWidth * MAX_PERCENTAGE_BASE;
+        leftCol.MinWidth = newWindowWidth * MinPercentageBase;
+        leftCol.MaxWidth = newWindowWidth * MaxPercentageBase;
     }
 
     //初始化左边框宽度
@@ -79,13 +102,13 @@ public partial class MainWindow : Window
         var grid = Container;
         var leftCol = grid.ColumnDefinitions[0];
 
-        if (percent < MIN_PERCENTAGE_BASE)
+        if (percent < MinPercentageBase)
         {
-            percent = MIN_PERCENTAGE_BASE;
+            percent = MinPercentageBase;
         }
-        else if (percent > MAX_PERCENTAGE_BASE)
+        else if (percent > MaxPercentageBase)
         {
-            percent = MAX_PERCENTAGE_BASE;
+            percent = MaxPercentageBase;
         }
 
         leftCol.Width = new GridLength(Width * percent, GridUnitType.Pixel);

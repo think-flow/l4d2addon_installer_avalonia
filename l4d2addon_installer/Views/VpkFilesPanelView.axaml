@@ -99,16 +99,16 @@
                         <TextBlock.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="复制文件名"
-                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).CopyFileNameCommand, FallbackValue={x:Null}}" 
-                                          InputGesture="Ctrl+C"/>
+                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).CopyFileNameCommand, FallbackValue={x:Null}}"
+                                          InputGesture="Ctrl+C" />
                                 <MenuItem Header="文件管理器中打开"
                                           IsVisible="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).CanRevealFile, FallbackValue={x:Null}}"
                                           Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).RevealFileCommand, FallbackValue={x:Null}}"
                                           CommandParameter="{Binding .}" />
                                 <Separator />
                                 <MenuItem Header="删除"
-                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).DeleteFileCommand, FallbackValue={x:Null}}" 
-                                          InputGesture="Delete"/>
+                                          Command="{Binding #Root.((vm:VpkFilesPanelViewModel)DataContext).DeleteFileCommand, FallbackValue={x:Null}}"
+                                          InputGesture="Delete" />
                             </ContextMenu>
                         </TextBlock.ContextMenu>
                     </TextBlock>
