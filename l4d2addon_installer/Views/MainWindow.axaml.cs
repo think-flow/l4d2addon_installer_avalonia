@@ -2,6 +2,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using l4d2addon_installer.Services;
+using l4d2addon_installer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace l4d2addon_installer.Views;
@@ -30,6 +31,9 @@ public partial class MainWindow : Window
         var leftCol = grid.ColumnDefinitions[0];
         var appConfig = Provider.GetRequiredService<AppConfigService>().AppConfig;
         appConfig.LeftColWidthPercent = leftCol.ActualWidth / Width;
+
+        var dataContext = (MainWindowViewModel) DataContext!;
+        appConfig.IsCoverd = dataContext.OperationPanelViewModel.IsCoverd;
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)

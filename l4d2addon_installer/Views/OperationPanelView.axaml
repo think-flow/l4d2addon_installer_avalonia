@@ -79,6 +79,90 @@
                 </Style>
             </Style>
         </Style>
+
+        <!-- ToggleButton 按钮样式 -->
+        <Style Selector="ToggleButton.switch">
+            <Setter Property="Cursor" Value="Arrow" />
+            <Setter Property="Background" Value="#da409eff" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="White" />
+
+            <!-- 设置ToggleButton的模板 -->
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border BorderBrush="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Background="{TemplateBinding Background}">
+                        <Panel Height="20">
+                            <Panel x:Name="inner_text">
+                                <TextBlock Classes="switch-off">不替换文件</TextBlock>
+                                <TextBlock Classes="switch-on">替换文件</TextBlock>
+                            </Panel>
+                            <Ellipse x:Name="inner_circle" Fill="White" Width="20" Height="20"
+                                     Stroke="{TemplateBinding Background}"
+                                     StrokeThickness="{TemplateBinding BorderThickness}"
+                                     RenderTransform="translateX(-37px)" />
+                        </Panel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+
+            <!-- 关闭按钮缩放效果 -->
+            <Style Selector="^:pressed">
+                <Setter Property="RenderTransform" Value="{x:Null}" />
+            </Style>
+
+            <Style Selector="^">
+                <!-- 设置按钮的样式和过渡效果 -->
+                <Style Selector="^ /template/ Panel#inner_text">
+                    <Style Selector="^ TextBlock">
+                        <Setter Property="Transitions">
+                            <Transitions>
+                                <ThicknessTransition Property="Padding" Duration="0:0:0.2" />
+                            </Transitions>
+                        </Setter>
+                    </Style>
+                    <Style Selector="^ TextBlock.switch-off">
+                        <Setter Property="IsVisible" Value="True" />
+                        <Setter Property="Padding" Value="25,0,6,0" />
+                    </Style>
+                    <Style Selector="^ TextBlock.switch-on">
+                        <Setter Property="IsVisible" Value="False" />
+                        <Setter Property="Padding" Value="25,0,6,0" />
+                    </Style>
+                </Style>
+                <!-- 设置圆圈的过渡 -->
+                <Style Selector="^ /template/ Ellipse#inner_circle">
+                    <Setter Property="Transitions">
+                        <Transitions>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" />
+                        </Transitions>
+                    </Setter>
+                </Style>
+            </Style>
+
+            <Style Selector="^:checked">
+                <!-- 设置选中按钮的样式和过渡效果 -->
+                <Style Selector="^ /template/ Panel#inner_text">
+                    <Style Selector="^ TextBlock.switch-off">
+                        <Setter Property="IsVisible" Value="False" />
+                        <Setter Property="Padding" Value="6,0,25,0" />
+                    </Style>
+                    <Style Selector="^ TextBlock.switch-on">
+                        <Setter Property="IsVisible" Value="True" />
+                        <Setter Property="Padding" Value="6,0,25,0" />
+                    </Style>
+                </Style>
+                <!-- 设置选中状态圆圈的的样式 -->
+                <Style Selector="^ /template/ Ellipse#inner_circle">
+                    <Setter Property="RenderTransform" Value="translateX(31px)" />
+                </Style>
+            </Style>
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="50*,50*">
@@ -97,8 +181,7 @@
                 <TextBlock>此区域安装vpk</TextBlock>
             </Panel>
             <Canvas>
-                <!-- todo ToggleButton按钮样式 -->
-                <ToggleButton Canvas.Top="5" Canvas.Right="10">lkjlssadf</ToggleButton>
+                <ToggleButton Classes="switch" Canvas.Top="10" Canvas.Right="10" IsChecked="{Binding IsCoverd}" />
             </Canvas>
             <Panel Classes="loading-mask" IsVisible="{Binding ShowLoading}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
