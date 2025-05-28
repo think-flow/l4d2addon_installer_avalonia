@@ -17,6 +17,8 @@ internal sealed partial class Program
     {
         //初始化Serilog
         ConfigureLogger();
+
+#if DEBUG
         try
         {
             BuildAvaloniaApp()
@@ -24,15 +26,23 @@ internal sealed partial class Program
         }
         catch (Exception e)
         {
-            //在此捕获全局异常
-#if DEBUG
             Log.Debug(e, "未处理异常");
             NativeMessageBox.ShowError(e.ToString(), "Error");
-#else
-            Log.Fatal(e,"未处理异常");
-            NativeMessageBox.ShowError("未处理异常", "Error");
-#endif
         }
+#endif
+#if RELEASE
+        AppDomain.CurrentDomain.UnhandledException += (_, eArgs) =>
+        {
+            // 在Native AOT发布模式下，不知道为什么try-catch方式，无法捕获到未处理异常
+            // 这种方式能暂时解决全局异常处理的问题
+            if (eArgs.ExceptionObject is not Exception e) return;
+            Log.Fatal(e, "未处理异常");
+            NativeMessageBox.ShowError("未处理异常", "Error");
+            Environment.Exit(1000);
+        };
+        BuildAvaloniaApp()
+            .StartWithClassicDesktopLifetime(args);
+#endif
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
