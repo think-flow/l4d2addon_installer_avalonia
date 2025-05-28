@@ -6,3 +6,5 @@ riderModule.iml
 .idea
 l4d2addon_installer.sln.DotSettings.user
 publish
+/l4d2addon_installer/Native/*
+!/l4d2addon_installer/Native/readme.md
