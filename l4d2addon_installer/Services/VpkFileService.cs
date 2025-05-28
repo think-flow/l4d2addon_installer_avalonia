@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using l4d2addon_installer.Models;
 using l4d2addon_installer.ViewModels;
 using Microsoft.Win32;
+using Serilog;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 
@@ -520,19 +521,19 @@ public partial class VpkFileService
 
         _fileWatcher.Created += (_, e) =>
         {
-            Debug.WriteLine("Created: " + e.Name);
+            Log.Debug("[FileWatcher Event Created] {filename}", e.Name);
             OnVpkFileCreatedHandler?.Invoke(e.FullPath);
         };
 
         _fileWatcher.Deleted += (_, e) =>
         {
-            Debug.WriteLine("Deleted: " + e.Name);
+            Log.Debug("[FileWatcher Event Deleted] {filename}", e.Name);
             OnVpkFileDeletedHandler?.Invoke(e.FullPath);
         };
 
         _fileWatcher.Renamed += (_, e) =>
         {
-            Debug.WriteLine("Renamed: " + e.Name);
+            Log.Debug("[FileWatcher Event Renamed] {oldfilename} -> {newfilename}", e.OldName, e.Name);
             OnVpkFileRenamedHandler?.Invoke(e.OldFullPath, e.FullPath);
         };
 

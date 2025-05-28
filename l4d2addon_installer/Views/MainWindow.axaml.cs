@@ -6,6 +6,7 @@ using Avalonia.Reactive;
 using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace l4d2addon_installer.Views;
 
@@ -34,6 +35,7 @@ public partial class MainWindow : Window
     //监听窗口的状态
     private void OnStateChanged(WindowState state)
     {
+        Log.Debug("MainWindow WindowState: {@WindowState}", state);
         if (state == WindowState.Minimized)
         {
             // 最小化窗口时，启用EcoQos

@@ -8,6 +8,11 @@
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+
+        <Description>管理Left 4 Dead 2游戏的vpk文件</Description>
+        <FileVersion>1.0.0</FileVersion>
+        <Authors>Cole</Authors>
+        <Copyright>Copyright © 2024 Cole. All rights reserved.</Copyright>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,6 +31,10 @@
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5"/>
+        <PackageReference Include="Serilog" Version="4.3.0"/>
+        <!-- 仅在 Debug 配置下引入 Serilog.Sinks.Debug -->
+        <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" Condition="'$(Configuration)' == 'Debug'"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0"/>
         <PackageReference Include="SharpCompress" Version="0.39.0"/>
     </ItemGroup>
 </Project>

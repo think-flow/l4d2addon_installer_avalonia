@@ -1,4 +1,5 @@
 ﻿using System;
+using Serilog;
 
 namespace l4d2addon_installer.Services;
 
@@ -6,9 +7,17 @@ public class LoggerService
 {
     public Action<LogMessage>? HandleLog { get; set; }
 
-    public void LogMessage(string message) => HandleLog?.Invoke(new LogMessage(message, LogMessageType.Message));
+    public void LogMessage(string message)
+    {
+        Log.Information("{msg}", message);
+        HandleLog?.Invoke(new LogMessage(message, LogMessageType.Message));
+    }
 
-    public void LogError(string message) => HandleLog?.Invoke(new LogMessage(message, LogMessageType.Error));
+    public void LogError(string message)
+    {
+        Log.Warning("{msg}", message);
+        HandleLog?.Invoke(new LogMessage(message, LogMessageType.Error));
+    }
 }
 
 public class LogMessage
