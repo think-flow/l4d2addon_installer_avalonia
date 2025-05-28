@@ -100,7 +100,11 @@ public partial class MainWindow : Window
     private void InitializeLeftColWidth()
     {
         var appConfig = Provider.GetRequiredService<AppConfigService>().AppConfig;
-        double percent = appConfig.LeftColWidthPercent ?? 0;
+
+        //如果没有配置LeftColWidthPercent，则回滚回编译时宽度
+        if (appConfig.LeftColWidthPercent is null) return;
+
+        double percent = appConfig.LeftColWidthPercent.Value;
         var grid = Container;
         var leftCol = grid.ColumnDefinitions[0];
 
