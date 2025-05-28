@@ -10,6 +10,7 @@
         <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
 
         <Description>管理Left 4 Dead 2游戏的vpk文件</Description>
+        <ApplicationIcon>./Assets/logo.ico</ApplicationIcon>
         <FileVersion>1.0.0</FileVersion>
         <Authors>Cole</Authors>
         <Copyright>Copyright © 2024 Cole. All rights reserved.</Copyright>

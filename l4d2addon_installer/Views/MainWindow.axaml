@@ -9,7 +9,7 @@
         Width="800" Height="500"
         x:Class="l4d2addon_installer.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/logo.ico"
         Title="vpk安装器"
         WindowStartupLocation="CenterScreen">
 
