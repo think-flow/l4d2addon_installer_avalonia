@@ -9,6 +9,11 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
 
+        <PublishAot>true</PublishAot>
+        <!-- Recommended Avalonia trimming settings for Native AOT -->
+        <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+        <TrimMode>link</TrimMode>
+
         <Description>管理Left 4 Dead 2游戏的vpk文件</Description>
         <ApplicationIcon>./Assets/logo.ico</ApplicationIcon>
         <FileVersion>1.0.0</FileVersion>
@@ -18,6 +23,20 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Preserve Avalonia types for reflection -->
+        <TrimmerRootAssembly Include="Avalonia.Themes.Fluent"/>
+    </ItemGroup>
+
+    <ItemGroup Label="ImportLib">
+        <DirectPInvoke Include="libHarfBuzzSharp"/>
+        <NativeLibrary Include="Native\libHarfBuzzSharp.lib"/>
+        <DirectPInvoke Include="libSkiaSharp"/>
+        <NativeLibrary Include="Native\libSkiaSharp.lib"/>
+        <DirectPInvoke Include="av_libglesv2"/>
+        <NativeLibrary Include="Native\av_libglesv2.lib"/>
     </ItemGroup>
 
     <ItemGroup>
