@@ -57,7 +57,7 @@ public class App : Application
     private void DesktopOnStartup(object? sender, ControlledApplicationLifetimeStartupEventArgs e)
     {
         var provider = _provider;
-        var appConfigService = provider.GetRequiredService<AppConfigService>();
+        var appConfigService = provider.GetRequiredService<IAppConfigService>();
         var logger = provider.GetRequiredService<LoggerService>();
         try
         {
@@ -77,7 +77,7 @@ public class App : Application
     private void DesktopOnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
         var provider = _provider;
-        var appConfigService = provider.GetRequiredService<AppConfigService>();
+        var appConfigService = provider.GetRequiredService<IAppConfigService>();
         try
         {
             appConfigService.StoreConfig();

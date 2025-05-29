@@ -1,22 +1,20 @@
 ﻿using System;
 using System.IO;
-using System.Text.Json;
+using System.Text;
 using System.Threading;
-using l4d2addon_installer.Json.Context;
 using l4d2addon_installer.Models;
+using YamlDotNet.Core;
+using YamlDotNet.Serialization;
 
 namespace l4d2addon_installer.Services;
 
-public class AppConfigService
+public class YamlAppConfigService : IAppConfigService
 {
+    private const string ConfigFilePath = "./config.yaml";
+    private readonly IDeserializer _deserializer = new StaticDeserializerBuilder(new MyYamlSerializerContext()).Build();
     private readonly ReaderWriterLockSlim _rwLock = new(LockRecursionPolicy.NoRecursion);
+    private readonly ISerializer _serializer = new StaticSerializerBuilder(new MyYamlSerializerContext()).Build();
     private AppConfig? _config;
-
-    // private JsonSerializerOptions DefaultSerializerOption { get; } = new()
-    // {
-    //     //该Resolver 表示使用基于反射的序列化和反序列化
-    //     TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-    // };
 
     /// <summary>
     /// 获取应用程序的配置信息
@@ -59,12 +57,10 @@ public class AppConfigService
     {
         try
         {
-            using var fileStream = new FileStream("./config.json", FileMode.Create, FileAccess.Write);
-
-            // 采用反射模式
-            // JsonSerializer.Serialize(fileStream, AppConfig, DefaultSerializerOption);
-            // 采用源生成器模式
-            JsonSerializer.Serialize(fileStream, AppConfig, MyJsonSerializerContext.Default.AppConfig);
+            using var fileStream = new FileStream(ConfigFilePath, FileMode.Create, FileAccess.Write);
+            string yamlStr = _serializer.Serialize(AppConfig);
+            byte[] buffer = Encoding.UTF8.GetBytes(yamlStr);
+            fileStream.Write(buffer, 0, buffer.Length);
         }
         catch (Exception e)
         {
@@ -80,27 +76,41 @@ public class AppConfigService
     public void LoadConfig()
     {
         FileStream? fileStream = null;
+        TextReader? textReader = null;
         try
         {
-            fileStream = new FileStream("./config.json", FileMode.Open, FileAccess.Read);
-            // 采用反射模式
-            // var config = JsonSerializer.Deserialize<AppConfig>(fileStream, DefaultSerializerOption);
-            // 采用源生成器模式
-            var config = JsonSerializer.Deserialize(fileStream, MyJsonSerializerContext.Default.AppConfig);
-            AppConfig = config ?? throw new JsonException();
+            fileStream = new FileStream(ConfigFilePath, FileMode.Open, FileAccess.Read);
+            textReader = new StreamReader(fileStream);
+            string yamlStr = textReader.ReadToEnd();
+            var config = _deserializer.Deserialize<AppConfig>(yamlStr);
+
+            // 当文件内容为空时，config会为null
+            if (config is null)
+            {
+                AppConfig = new AppConfig();
+                throw new ServiceException("The content of the config.yaml file is empty. Will use the default configuration.");
+            }
+
+            AppConfig = config;
         }
         catch (FileNotFoundException e)
         {
             AppConfig = new AppConfig();
-            throw new ServiceException("config.json file was not found. Will use the default configuration.", e);
+            throw new ServiceException("config.yaml file was not found. Will use the default configuration.", e);
         }
-        catch (JsonException e)
+        catch (YamlException e)
         {
             AppConfig = new AppConfig();
-            throw new ServiceException("The format of the config.json file is incorrect. Will use the default configuration.", e);
+            throw new ServiceException("The format of the config.yaml file is incorrect. Will use the default configuration.", e);
+        }
+        catch (InvalidCastException e)
+        {
+            AppConfig = new AppConfig();
+            throw new ServiceException("The format of the config.yaml file is incorrect. Will use the default configuration.", e);
         }
         finally
         {
+            textReader?.Dispose();
             fileStream?.Dispose();
         }
     }

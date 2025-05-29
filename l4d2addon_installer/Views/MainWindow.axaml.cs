@@ -54,7 +54,7 @@ public partial class MainWindow : Window
     {
         var grid = Container;
         var leftCol = grid.ColumnDefinitions[0];
-        var appConfig = Provider.GetRequiredService<AppConfigService>().AppConfig;
+        var appConfig = Provider.GetRequiredService<IAppConfigService>().AppConfig;
         appConfig.LeftColWidthPercent = leftCol.ActualWidth / Width;
 
         var dataContext = (MainWindowViewModel) DataContext!;
@@ -99,7 +99,7 @@ public partial class MainWindow : Window
     //初始化左边框宽度
     private void InitializeLeftColWidth()
     {
-        var appConfig = Provider.GetRequiredService<AppConfigService>().AppConfig;
+        var appConfig = Provider.GetRequiredService<IAppConfigService>().AppConfig;
 
         //如果没有配置LeftColWidthPercent，则回滚回编译时宽度
         if (appConfig.LeftColWidthPercent is null) return;

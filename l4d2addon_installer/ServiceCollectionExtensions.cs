@@ -24,7 +24,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<VpkFileService>();
         services.AddSingleton<LoggerService>();
-        services.AddSingleton<AppConfigService>();
+        services.AddSingleton<IAppConfigService, YamlAppConfigService>();
 
         return services;
     }

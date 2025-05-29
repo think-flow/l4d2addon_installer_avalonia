@@ -122,7 +122,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
         Debug.Assert(Provider is not null);
         Debug.Assert(DataContext is not null);
 
-        var appConfig = Provider.GetRequiredService<AppConfigService>().AppConfig;
+        var appConfig = Provider.GetRequiredService<IAppConfigService>().AppConfig;
         bool isCoverd = appConfig.IsCoverd ?? false;
         DataContext.IsCoverd = isCoverd;
     }
