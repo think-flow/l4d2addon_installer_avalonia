@@ -301,7 +301,7 @@ public partial class VpkFileService
                     entry.WriteToDirectory(addonsPath, new ExtractionOptions
                     {
                         Overwrite = isCoverd,
-                        ExtractFullPath = true
+                        ExtractFullPath = false
                     });
                     progressCallback($"{fileName} --> {entry.Key} 已安装", null);
                 }
