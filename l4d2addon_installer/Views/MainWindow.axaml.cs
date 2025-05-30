@@ -30,7 +30,7 @@ public partial class MainWindow : Window
         this.GetObservable(WindowStateProperty).Subscribe(new AnonymousObserver<WindowState>(OnStateChanged));
     }
 
-    public IServiceProvider Provider { get; init; } = null!;
+    public IServiceProvider Provider => App.Services;
 
     //监听窗口的状态
     private void OnStateChanged(WindowState state)

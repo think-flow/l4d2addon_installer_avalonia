@@ -27,9 +27,8 @@ public partial class VpkFilesPanelView : DataContextUserControl<VpkFilesPanelVie
     private async void OnLoaded(object? sender, RoutedEventArgs e)
     {
         Debug.Assert(DataContext is not null);
-        Debug.Assert(Provider is not null);
 
-        var logger = Provider.GetRequiredService<LoggerService>();
+        var logger = Services.GetRequiredService<LoggerService>();
         try
         {
             await DataContext.UpdateVpkFilesAsync();

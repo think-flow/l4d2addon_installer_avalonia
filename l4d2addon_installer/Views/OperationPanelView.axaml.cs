@@ -75,13 +75,12 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     private async Task InstallVpkAsync(List<string> filePaths)
     {
         Debug.Assert(DataContext is not null);
-        Debug.Assert(Provider is not null);
 
-        var logger = Provider.GetRequiredService<LoggerService>();
+        var logger = Services.GetRequiredService<LoggerService>();
         DataContext.ShowLoading = true;
 
         bool isCoverd = DataContext.IsCoverd;
-        var vpkFileService = Provider.GetRequiredService<VpkFileService>();
+        var vpkFileService = Services.GetRequiredService<VpkFileService>();
 
         bool isSuccessd = true;
         //并行安装文件
@@ -118,10 +117,9 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     //初始化 安装文件时是否覆盖的选项
     private void InitializeIsCoverd()
     {
-        Debug.Assert(Provider is not null);
         Debug.Assert(DataContext is not null);
 
-        var appConfig = Provider.GetRequiredService<IAppConfigService>().AppConfig;
+        var appConfig = Services.GetRequiredService<IAppConfigService>().AppConfig;
         bool isCoverd = appConfig.IsCoverd ?? false;
         DataContext.IsCoverd = isCoverd;
     }

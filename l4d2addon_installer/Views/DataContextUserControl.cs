@@ -5,14 +5,14 @@ using l4d2addon_installer.ViewModels;
 namespace l4d2addon_installer.Views;
 
 public class DataContextUserControl<TDataContext> : UserControl
-    where TDataContext : ServiceViewModelBase
+    where TDataContext : ViewModelBase
 {
     protected DataContextUserControl()
     {
         DataContextChanged += OnDataContextChanged;
     }
 
-    protected IServiceProvider? Provider { get; private set; }
+    protected IServiceProvider Services => App.Services;
 
     protected new TDataContext? DataContext { get; private set; }
 
@@ -20,6 +20,5 @@ public class DataContextUserControl<TDataContext> : UserControl
     {
         var dataContext = (TDataContext) base.DataContext!;
         DataContext = dataContext;
-        Provider = dataContext.Provider;
     }
 }

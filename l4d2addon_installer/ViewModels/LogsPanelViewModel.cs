@@ -5,25 +5,25 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace l4d2addon_installer.ViewModels;
 
-public class LogsPanelViewModel : ServiceViewModelBase
+public class LogsPanelViewModel : ViewModelBase
 {
-    [Obsolete("专供设计器调用", true)]
-    public LogsPanelViewModel() : base(null!)
+    public LogsPanelViewModel()
     {
-        var now = DateTime.Now;
-        var rd = new Random();
-        for (int i = 0; i < 23; i++)
+        if (IsDesignMode)
         {
-            int temp = rd.Next(0, 2);
-            var level = temp == 0 ? LogMessageType.Message : LogMessageType.Error;
-            Logs.Add(new LogsItemViewModel(level, $"1111111111111111111111111111111111111文件名已写入剪贴板超长超长超长超长超长超长超长{i}", now.AddSeconds(i).ToString("HH:mm:ss")));
-        }
-    }
+            var now = DateTime.Now;
+            var rd = new Random();
+            for (int i = 0; i < 23; i++)
+            {
+                int temp = rd.Next(0, 2);
+                var level = temp == 0 ? LogMessageType.Message : LogMessageType.Error;
+                Logs.Add(new LogsItemViewModel(level, $"1111111111111111111111111111111111111文件名已写入剪贴板超长超长超长超长超长超长超长{i}", now.AddSeconds(i).ToString("HH:mm:ss")));
+            }
 
-    public LogsPanelViewModel(IServiceProvider provider)
-        : base(provider)
-    {
-        var logger = provider.GetRequiredService<LoggerService>();
+            return;
+        }
+
+        var logger = Services.GetRequiredService<LoggerService>();
         //设置处理log的回调函数
         logger.HandleLog += OnLogHandler;
     }

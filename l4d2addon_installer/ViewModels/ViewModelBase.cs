@@ -1,4 +1,5 @@
 ﻿using System;
+using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -6,6 +7,10 @@ namespace l4d2addon_installer.ViewModels;
 
 public class ViewModelBase : ObservableObject
 {
+    protected IServiceProvider Services => App.Services;
+
+    protected bool IsDesignMode => Design.IsDesignMode;
+
     protected void ExecuteIfOnUiThread(Action action)
     {
         if (Dispatcher.UIThread.CheckAccess())
@@ -17,9 +22,4 @@ public class ViewModelBase : ObservableObject
             Dispatcher.UIThread.Post(action);
         }
     }
-}
-
-public class ServiceViewModelBase(IServiceProvider provider) : ViewModelBase
-{
-    public IServiceProvider Provider { get; } = provider;
 }

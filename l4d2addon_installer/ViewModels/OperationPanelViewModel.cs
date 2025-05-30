@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using l4d2addon_installer.Services;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace l4d2addon_installer.ViewModels;
 
-public partial class OperationPanelViewModel : ServiceViewModelBase
+public partial class OperationPanelViewModel : ViewModelBase
 {
     private readonly LoggerService _logger;
     private readonly VpkFileService _vpkFileService;
@@ -18,16 +17,11 @@ public partial class OperationPanelViewModel : ServiceViewModelBase
     [ObservableProperty]
     private bool _showLoading;
 
-    [Obsolete("专供设计器调用", true)]
-    public OperationPanelViewModel() : base(null!)
+    public OperationPanelViewModel()
     {
-    }
-
-    public OperationPanelViewModel(IServiceProvider provider)
-        : base(provider)
-    {
-        _vpkFileService = provider.GetRequiredService<VpkFileService>();
-        _logger = provider.GetRequiredService<LoggerService>();
+        if (IsDesignMode) return;
+        _vpkFileService = Services.GetRequiredService<VpkFileService>();
+        _logger = Services.GetRequiredService<LoggerService>();
     }
 
     [RelayCommand]

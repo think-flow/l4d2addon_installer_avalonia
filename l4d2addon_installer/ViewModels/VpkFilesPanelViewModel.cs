@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Input.Platform;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using l4d2addon_installer.Collections.ObjectModel;
@@ -15,39 +15,37 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace l4d2addon_installer.ViewModels;
 
-public partial class VpkFilesPanelViewModel : ServiceViewModelBase
+public partial class VpkFilesPanelViewModel : ViewModelBase
 {
-    private readonly IClipboard _clipboard;
     private readonly LoggerService _logger;
     private readonly VpkFileService _vpkFileService;
 
     [ObservableProperty]
     private bool _canRevealFile;
 
-    [Obsolete("专供设计器调用", true)]
-    public VpkFilesPanelViewModel() : base(null!)
+    public VpkFilesPanelViewModel()
     {
-        var now = DateTime.Now;
-        for (int i = 0; i < 23; i++)
+        if (IsDesignMode)
         {
-            VpkFiles.Add(new VpkFileInfoViewModel(new VpkFileInfo
+            var now = DateTime.Now;
+            for (int i = 0; i < 23; i++)
             {
-                CreationTime = now.AddHours(1),
-                ModifiedTime = now.AddHours(1),
-                FullPath = $"哈哈dds/kjlkjj/{i}.vpk",
-                Name = $"哈哈ddd{i}.vpk",
-                NameWithoutEx = "kjljkkjwekjlr",
-                Size = 1111132
-            }));
-        }
-    }
+                VpkFiles.Add(new VpkFileInfoViewModel(new VpkFileInfo
+                {
+                    CreationTime = now.AddHours(1),
+                    ModifiedTime = now.AddHours(1),
+                    FullPath = $"哈哈dds/kjlkjj/{i}.vpk",
+                    Name = $"哈哈ddd{i}.vpk",
+                    NameWithoutEx = "kjljkkjwekjlr",
+                    Size = 1111132
+                }));
+            }
 
-    public VpkFilesPanelViewModel(IServiceProvider provider)
-        : base(provider)
-    {
-        _vpkFileService = provider.GetRequiredService<VpkFileService>();
-        _logger = provider.GetRequiredService<LoggerService>();
-        _clipboard = provider.GetRequiredService<IClipboard>();
+            return;
+        }
+
+        _vpkFileService = Services.GetRequiredService<VpkFileService>();
+        _logger = Services.GetRequiredService<LoggerService>();
 
         // 监听选中项变化
         SelectedVpkFiles = new ObservableCollection<VpkFileInfoViewModel>();
@@ -74,7 +72,8 @@ public partial class VpkFilesPanelViewModel : ServiceViewModelBase
     private async Task CopyFileName()
     {
         string fileNames = string.Join(' ', SelectedVpkFiles.Select(p => $"\"{p.Name}\""));
-        await _clipboard.SetTextAsync(fileNames);
+
+        await TopLevel.GetTopLevel(App.MainWindow)!.Clipboard!.SetTextAsync(fileNames);
         _logger.LogMessage("文件名已写入剪贴板");
     }
 
