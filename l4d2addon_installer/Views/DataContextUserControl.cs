@@ -14,7 +14,7 @@ public class DataContextUserControl<TDataContext> : UserControl
 
     protected IServiceProvider Services => App.Services;
 
-    protected new TDataContext? DataContext { get; private set; }
+    protected new TDataContext DataContext { get; private set; } = null!;
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using l4d2addon_installer.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,36 +18,39 @@ public class LogsPanelViewModel : ViewModelBase
             for (int i = 0; i < 23; i++)
             {
                 int temp = rd.Next(0, 2);
-                var level = temp == 0 ? LogMessageType.Message : LogMessageType.Error;
+                var level = temp == 0 ? LogMessage.MessageType.Message : LogMessage.MessageType.Error;
                 Logs.Add(new LogsItemViewModel(level, $"1111111111111111111111111111111111111文件名已写入剪贴板超长超长超长超长超长超长超长{i}", now.AddSeconds(i).ToString("HH:mm:ss")));
             }
 
             return;
         }
 
+        //设置处理log消息的函数
         var logger = Services.GetRequiredService<LoggerService>();
-        //设置处理log的回调函数
-        logger.HandleLog += OnLogHandler;
+        HandleLogMessage(logger.LogMessageReader);
     }
 
     public ObservableCollection<LogsItemViewModel> Logs { get; } = new();
 
     //处理log消息
-    private void OnLogHandler(LogMessage log)
+    private async void HandleLogMessage(ChannelReader<LogMessage> reader)
     {
-        //因为打印日志可能由其他线程调用，所以将其通过Dispatcher返回ui线程
-        ExecuteIfOnUiThread(() =>
+        await foreach (var msg in reader.ReadAllAsync().ConfigureAwait(false))
         {
-            Logs.Add(new LogsItemViewModel(log.Type, log.Message, log.Time.ToString("HH:mm:ss")));
-        });
+            //因为打印日志可能由其他线程调用，所以将其通过Dispatcher返回ui线程
+            ExecuteIfOnUiThread(() =>
+            {
+                Logs.Add(new LogsItemViewModel(msg.Type, msg.Message, msg.Time.ToString("HH:mm:ss")));
+            });
+        }
     }
 }
 
 public class LogsItemViewModel : ViewModelBase
 {
-    public LogsItemViewModel(LogMessageType logType, string message, string time)
+    public LogsItemViewModel(LogMessage.MessageType type, string message, string time)
     {
-        LogType = logType;
+        Type = type;
         Message = message;
         Time = time;
     }
@@ -54,7 +59,7 @@ public class LogsItemViewModel : ViewModelBase
 
     public string Message { get; }
 
-    public LogMessageType LogType { get; }
+    public LogMessage.MessageType Type { get; }
 
-    public bool IsMessage => LogType == LogMessageType.Message;
+    public bool IsMessage => Type == LogMessage.MessageType.Message;
 }

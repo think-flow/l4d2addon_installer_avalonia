@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using l4d2addon_installer.Models;
 using l4d2addon_installer.ViewModels;
@@ -20,14 +21,8 @@ namespace l4d2addon_installer.Services;
 
 public partial class VpkFileService
 {
-    public delegate void VpkFileCreatedDelegate(string fullPath);
-
-    public delegate void VpkFileDeletedDelegate(string fullPath);
-
-    public delegate void VpkFileRenamedDelegate(string oldFullPath, string newFullPath);
-
+    private readonly Channel<FileWatcherMessage> _channel = Channel.CreateUnbounded<FileWatcherMessage>();
     private string? _addonPath;
-
     private FileSystemWatcher? _fileWatcher;
     private string? _gamePath;
     private string? _steamPath;
@@ -37,20 +32,7 @@ public partial class VpkFileService
         WatcherAddons(GetAddonsPath());
     }
 
-    /// <summary>
-    /// Addons文件夹，vpk文件新增通知。
-    /// </summary>
-    public VpkFileCreatedDelegate? OnVpkFileCreatedHandler { get; set; }
-
-    /// <summary>
-    /// Addons文件夹，vpk文件删除通知。
-    /// </summary>
-    public VpkFileDeletedDelegate? OnVpkFileDeletedHandler { get; set; }
-
-    /// <summary>
-    /// Addons文件夹，vpk文件重命名通知。
-    /// </summary>
-    public VpkFileRenamedDelegate? OnVpkFileRenamedHandler { get; set; }
+    public ChannelReader<FileWatcherMessage> FileWatcherMessageReader => _channel.Reader;
 
     /// <summary>
     /// 在文件管理器中显示文件
@@ -522,19 +504,19 @@ public partial class VpkFileService
         _fileWatcher.Created += (_, e) =>
         {
             Log.Debug("[FileWatcher Event Created] {filename}", e.Name);
-            OnVpkFileCreatedHandler?.Invoke(e.FullPath);
+            _channel.Writer.TryWrite(new FileWatcherMessage(FileWatcherMessage.MessageType.Created, e.FullPath, e.FullPath));
         };
 
         _fileWatcher.Deleted += (_, e) =>
         {
             Log.Debug("[FileWatcher Event Deleted] {filename}", e.Name);
-            OnVpkFileDeletedHandler?.Invoke(e.FullPath);
+            _channel.Writer.TryWrite(new FileWatcherMessage(FileWatcherMessage.MessageType.Deleted, e.FullPath, e.FullPath));
         };
 
         _fileWatcher.Renamed += (_, e) =>
         {
             Log.Debug("[FileWatcher Event Renamed] {oldfilename} -> {newfilename}", e.OldName, e.Name);
-            OnVpkFileRenamedHandler?.Invoke(e.OldFullPath, e.FullPath);
+            _channel.Writer.TryWrite(new FileWatcherMessage(FileWatcherMessage.MessageType.Renamed, e.FullPath, e.OldFullPath));
         };
 
         _fileWatcher.Error += (_, e) =>
@@ -655,4 +637,25 @@ public partial class VpkFileService
 
         #endregion
     }
+}
+
+public class FileWatcherMessage
+{
+    public enum MessageType
+    {
+        Created,
+        Deleted,
+        Renamed
+    }
+
+    public FileWatcherMessage(MessageType type, string filePath, string oldFilePath)
+    {
+        Type = type;
+        FilePath = filePath;
+        OldFilePath = oldFilePath;
+    }
+
+    public MessageType Type { get; }
+    public string FilePath { get; }
+    public string OldFilePath { get; }
 }

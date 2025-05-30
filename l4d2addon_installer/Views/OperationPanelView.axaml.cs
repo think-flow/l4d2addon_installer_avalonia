@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
@@ -22,16 +20,14 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     {
         InitializeComponent();
         if (Design.IsDesignMode) return;
-        Loaded += OnLoaded;
-    }
-
-    private void OnLoaded(object? sender, RoutedEventArgs e)
-    {
-        InitializeIsCoverd();
+        Initialized += (_, _) =>
+        {
+            InitializeIsCoverd();
+        };
     }
 
     //选择文件安装
-    private async void BottomPanel_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    private async void BottomPanel_OnPointerPressed(object? _, PointerPressedEventArgs e)
     {
         e.Handled = true;
         if (DataContext.ShowLoading) return;
@@ -49,7 +45,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     }
 
     //拖动文件安装
-    private async void BottomPanel_OnDrop(object? sender, DragEventArgs e)
+    private async void BottomPanel_OnDrop(object? _, DragEventArgs e)
     {
         e.Handled = true;
         if (!e.Data.Contains(DataFormats.Files)) return;
@@ -74,8 +70,6 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
 
     private async Task InstallVpkAsync(List<string> filePaths)
     {
-        Debug.Assert(DataContext is not null);
-
         var logger = Services.GetRequiredService<LoggerService>();
         DataContext.ShowLoading = true;
 
@@ -117,8 +111,6 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     //初始化 安装文件时是否覆盖的选项
     private void InitializeIsCoverd()
     {
-        Debug.Assert(DataContext is not null);
-
         var appConfig = Services.GetRequiredService<IAppConfigService>().AppConfig;
         bool isCoverd = appConfig.IsCoverd ?? false;
         DataContext.IsCoverd = isCoverd;

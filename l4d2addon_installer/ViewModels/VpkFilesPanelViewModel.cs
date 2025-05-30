@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -55,9 +56,7 @@ public partial class VpkFilesPanelViewModel : ViewModelBase
         };
 
         //设置处理addons文件夹变更的回调函数
-        _vpkFileService.OnVpkFileCreatedHandler = OnVpkFileCreatedHandler;
-        _vpkFileService.OnVpkFileDeletedHandler = OnVpkFileDeletedHandler;
-        _vpkFileService.OnVpkFileRenamedHandler = OnVpkFileRenamedHandler;
+        HandleFileWatcherMessage(_vpkFileService.FileWatcherMessageReader);
     }
 
     public ObservableSortedCollection<VpkFileInfoViewModel> VpkFiles { get; } = new(new VpkFileInfoViewModel.VpkFileInfoViewModelComparer());
@@ -147,6 +146,30 @@ public partial class VpkFilesPanelViewModel : ViewModelBase
         catch (ServiceException e)
         {
             _logger.LogError(e.Message);
+        }
+    }
+
+    private async void HandleFileWatcherMessage(ChannelReader<FileWatcherMessage> reader)
+    {
+        await foreach (var msg in reader.ReadAllAsync().ConfigureAwait(false))
+        {
+            ExecuteIfOnUiThread(() =>
+            {
+                switch (msg.Type)
+                {
+                    case FileWatcherMessage.MessageType.Created:
+                        OnVpkFileCreatedHandler(msg.FilePath);
+                        break;
+                    case FileWatcherMessage.MessageType.Deleted:
+                        OnVpkFileDeletedHandler(msg.FilePath);
+                        break;
+                    case FileWatcherMessage.MessageType.Renamed:
+                        OnVpkFileRenamedHandler(msg.OldFilePath, msg.FilePath);
+                        break;
+                    default:
+                        throw new InvalidOperationException("invalid message type");
+                }
+            });
         }
     }
 

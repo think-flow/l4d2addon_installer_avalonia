@@ -1,43 +1,46 @@
 ﻿using System;
+using System.Threading.Channels;
 using Serilog;
 
 namespace l4d2addon_installer.Services;
 
 public class LoggerService
 {
-    public Action<LogMessage>? HandleLog { get; set; }
+    private readonly Channel<LogMessage> _channel = Channel.CreateUnbounded<LogMessage>();
+
+    public ChannelReader<LogMessage> LogMessageReader => _channel.Reader;
 
     public void LogMessage(string message)
     {
         Log.Information("{msg}", message);
-        HandleLog?.Invoke(new LogMessage(message, LogMessageType.Message));
+        _channel.Writer.TryWrite(new LogMessage(message, Services.LogMessage.MessageType.Message));
     }
 
     public void LogError(string message)
     {
-        Log.Warning("{msg}", message);
-        HandleLog?.Invoke(new LogMessage(message, LogMessageType.Error));
+        Log.Information("{msg}", message);
+        _channel.Writer.TryWrite(new LogMessage(message, Services.LogMessage.MessageType.Message));
     }
 }
 
 public class LogMessage
 {
-    public LogMessage(string message, LogMessageType type)
+    public enum MessageType
+    {
+        Message,
+        Error
+    }
+
+    public LogMessage(string message, MessageType type)
     {
         Type = type;
         Message = message;
         Time = DateTimeOffset.Now;
     }
 
-    public LogMessageType Type { get; }
+    public MessageType Type { get; }
 
     public DateTimeOffset Time { get; }
 
     public string Message { get; }
-}
-
-public enum LogMessageType
-{
-    Message,
-    Error
 }

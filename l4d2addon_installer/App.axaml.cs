@@ -37,12 +37,11 @@ public class App : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
 
-            var mainWindow = new MainWindow
-            {
-                DataContext = new MainWindowViewModel()
-            };
-            desktop.MainWindow = mainWindow;
+            var mainWindow = new MainWindow();
             MainWindow = mainWindow;
+            mainWindow.DataContext = new MainWindowViewModel();
+            desktop.MainWindow = mainWindow;
+
             //注册程序退出事件
             desktop.Exit += DesktopOnExit;
             //注册程序启动事件
