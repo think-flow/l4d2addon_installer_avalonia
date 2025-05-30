@@ -21,11 +21,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     public OperationPanelView()
     {
         InitializeComponent();
-
         if (Design.IsDesignMode) return;
-        BottomPanel.SetValue(DragDrop.AllowDropProperty, true);
-        BottomPanel.AddHandler(DragDrop.DropEvent, BottomPanel_Drop);
-        BottomPanel.PointerPressed += BottomPanel_PointerPressed;
         Loaded += OnLoaded;
     }
 
@@ -35,8 +31,10 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     }
 
     //选择文件安装
-    private async void BottomPanel_PointerPressed(object? sender, PointerPressedEventArgs e)
+    private async void BottomPanel_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        e.Handled = true;
+        if (DataContext.ShowLoading) return;
         var storageProvider = TopLevel.GetTopLevel(this)!.StorageProvider;
         var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
@@ -51,8 +49,9 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     }
 
     //拖动文件安装
-    private async void BottomPanel_Drop(object? sender, DragEventArgs e)
+    private async void BottomPanel_OnDrop(object? sender, DragEventArgs e)
     {
+        e.Handled = true;
         if (!e.Data.Contains(DataFormats.Files)) return;
 
         var filePaths = e.Data.GetFiles()?.Select(f => f.Path.LocalPath).ToList();
