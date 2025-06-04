@@ -58,13 +58,21 @@ public partial class MainWindow : Window
         appConfig.LeftColWidthPercent = leftCol.ActualWidth / Width;
 
         var dataContext = (MainWindowViewModel) DataContext!;
-        appConfig.IsCoverd = dataContext.OperationPanelViewModel.IsCoverd;
+        appConfig.IsCoverd = dataContext.IsCoverd;
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         _isLoaded = true;
         InitializeLeftColWidth();
+        InitializeIsCoverd();
+    }
+
+    private void InitializeIsCoverd()
+    {
+        var appConfig = App.Services.GetRequiredService<IAppConfigService>().AppConfig;
+        bool isCoverd = appConfig.IsCoverd ?? false;
+        ((MainWindowViewModel) DataContext!).IsCoverd = isCoverd;
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)

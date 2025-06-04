@@ -5,7 +5,7 @@
              xmlns:vm="using:l4d2addon_installer.ViewModels"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="350"
              x:DataType="vm:OperationPanelViewModel"
-             x:Class="l4d2addon_installer.Views.OperationPanelView">
+             x:Class="l4d2addon_installer.Views.OperationPanelView" Name="Root">
 
     <Design.DataContext>
         <vm:OperationPanelViewModel />
@@ -184,7 +184,8 @@
                 <TextBlock>此区域安装vpk</TextBlock>
             </Panel>
             <Canvas>
-                <ToggleButton Classes="switch" Canvas.Top="10" Canvas.Right="10" IsChecked="{Binding IsCoverd}" />
+                <ToggleButton Classes="switch" Canvas.Top="10" Canvas.Right="10"
+                              IsChecked="{Binding #Root.IsCoverd}" />
             </Canvas>
             <Panel Classes="loading-mask" IsVisible="{Binding ShowLoading}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

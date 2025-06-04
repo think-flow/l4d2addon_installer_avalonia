@@ -12,9 +12,6 @@ public partial class OperationPanelViewModel : ViewModelBase
     private readonly VpkFileService _vpkFileService;
 
     [ObservableProperty]
-    private bool _isCoverd;
-
-    [ObservableProperty]
     private bool _showLoading;
 
     public OperationPanelViewModel()

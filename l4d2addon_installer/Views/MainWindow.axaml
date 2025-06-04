@@ -11,7 +11,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/logo.ico"
         Title="vpk安装器"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen" Name="root">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -32,31 +32,13 @@
         <local:MessageBoxView />
         <Grid ColumnDefinitions="*,5,2*" x:Name="Container" ZIndex="-2000">
             <!-- 窗口左边框 -->
-            <ContentControl Grid.Column="0" Content="{Binding VpkFileInfoViewModel}">
-                <ContentControl.ContentTemplate>
-                    <DataTemplate>
-                        <local:VpkFilesPanelView />
-                    </DataTemplate>
-                </ContentControl.ContentTemplate>
-            </ContentControl>
+            <local:VpkFilesPanelView Grid.Column="0" />
             <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
             <!-- 窗口右边框 -->
             <Grid Grid.Column="2" RowDefinitions="75*,25*">
-                <ContentControl Grid.Row="0" Content="{Binding OperationPanelViewModel}">
-                    <!-- 要向用户控件传递DataContext，记得通过ContentControl或者ItemsControl这类控件，向内传递 -->
-                    <ContentControl.ContentTemplate>
-                        <DataTemplate>
-                            <local:OperationPanelView />
-                        </DataTemplate>
-                    </ContentControl.ContentTemplate>
-                </ContentControl>
-                <ContentControl Grid.Row="1" Content="{Binding LogsPanelViewModel}">
-                    <ContentControl.ContentTemplate>
-                        <DataTemplate>
-                            <local:LogsPanelView />
-                        </DataTemplate>
-                    </ContentControl.ContentTemplate>
-                </ContentControl>
+                <local:OperationPanelView Grid.Row="0"
+                                          IsCoverd="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsCoverd, FallbackValue={x:Null}}" />
+                <local:LogsPanelView Grid.Row="1" />
             </Grid>
         </Grid>
     </Grid>

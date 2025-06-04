@@ -37,6 +37,10 @@ public class App : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
 
+            // 必须在创建窗口之前加载配置文件
+            // 确保窗口在加载过程中能获取配置信息
+            LoadAppConfig();
+
             var mainWindow = new MainWindow();
             MainWindow = mainWindow;
             mainWindow.DataContext = new MainWindowViewModel();
@@ -44,15 +48,13 @@ public class App : Application
 
             //注册程序退出事件
             desktop.Exit += DesktopOnExit;
-            //注册程序启动事件
-            desktop.Startup += DesktopOnStartup;
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    //程序启动时的处理
-    private void DesktopOnStartup(object? sender, ControlledApplicationLifetimeStartupEventArgs e)
+    //加载配置文件
+    private void LoadAppConfig()
     {
         var appConfigService = Services.GetRequiredService<IAppConfigService>();
         var logger = Services.GetRequiredService<LoggerService>();

@@ -19,7 +19,7 @@ public partial class VpkFilesPanelView : DataContextUserControl<VpkFilesPanelVie
     public VpkFilesPanelView()
     {
         InitializeComponent();
-
+        DataContext = new VpkFilesPanelViewModel();
         if (Design.IsDesignMode) return;
         Loaded += OnLoaded;
     }

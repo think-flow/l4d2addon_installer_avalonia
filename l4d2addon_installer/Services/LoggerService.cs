@@ -19,7 +19,7 @@ public class LoggerService
     public void LogError(string message)
     {
         Log.Information("{msg}", message);
-        _channel.Writer.TryWrite(new LogMessage(message, Services.LogMessage.MessageType.Message));
+        _channel.Writer.TryWrite(new LogMessage(message, Services.LogMessage.MessageType.Error));
     }
 }
 

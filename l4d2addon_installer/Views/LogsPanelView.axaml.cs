@@ -12,6 +12,7 @@ public partial class LogsPanelView : DataContextUserControl<LogsPanelViewModel>
     public LogsPanelView()
     {
         InitializeComponent();
+        DataContext = new LogsPanelViewModel();
         if (Design.IsDesignMode) return;
         Loaded += OnLoaded;
     }

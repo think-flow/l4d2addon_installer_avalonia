@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace l4d2addon_installer.Views;
 
@@ -19,11 +22,8 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     public OperationPanelView()
     {
         InitializeComponent();
+        DataContext = new OperationPanelViewModel();
         if (Design.IsDesignMode) return;
-        Initialized += (_, _) =>
-        {
-            InitializeIsCoverd();
-        };
     }
 
     //选择文件安装
@@ -73,7 +73,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
         var logger = Services.GetRequiredService<LoggerService>();
         DataContext.ShowLoading = true;
 
-        bool isCoverd = DataContext.IsCoverd;
+        bool isCoverd = IsCoverd;
         var vpkFileService = Services.GetRequiredService<VpkFileService>();
 
         bool isSuccessd = true;
@@ -108,11 +108,28 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
         DataContext.ShowLoading = false;
     }
 
-    //初始化 安装文件时是否覆盖的选项
-    private void InitializeIsCoverd()
+    #region Dependency Properties
+
+    private bool _isCoverd;
+
+    public static readonly DirectProperty<OperationPanelView, bool> IsCoverdProperty = AvaloniaProperty.RegisterDirect<OperationPanelView, bool>(
+        nameof(IsCoverd),
+        o => o.IsCoverd,
+        (o, v) => o.IsCoverd = v,
+        defaultBindingMode: BindingMode.TwoWay);
+
+    /// <summary>
+    /// 指示是否启用替换文件功能
+    /// </summary>
+    public bool IsCoverd
     {
-        var appConfig = Services.GetRequiredService<IAppConfigService>().AppConfig;
-        bool isCoverd = appConfig.IsCoverd ?? false;
-        DataContext.IsCoverd = isCoverd;
+        get => _isCoverd;
+        set
+        {
+            Log.Debug($"IsCoverd field:{_isCoverd} value {value}");
+            SetAndRaise(IsCoverdProperty, ref _isCoverd, value);
+        }
     }
+
+    #endregion
 }

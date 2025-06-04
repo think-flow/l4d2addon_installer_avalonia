@@ -1,17 +1,9 @@
-﻿namespace l4d2addon_installer.ViewModels;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-public class MainWindowViewModel : ViewModelBase
+namespace l4d2addon_installer.ViewModels;
+
+public partial class MainWindowViewModel : ViewModelBase
 {
-    public MainWindowViewModel()
-    {
-        OperationPanelViewModel = new OperationPanelViewModel();
-        LogsPanelViewModel = new LogsPanelViewModel();
-        VpkFileInfoViewModel = new VpkFilesPanelViewModel();
-    }
-
-    public LogsPanelViewModel LogsPanelViewModel { get; }
-
-    public OperationPanelViewModel OperationPanelViewModel { get; }
-
-    public VpkFilesPanelViewModel VpkFileInfoViewModel { get; }
+    [ObservableProperty]
+    private bool _isCoverd;
 }

@@ -9,16 +9,13 @@ public class DataContextUserControl<TDataContext> : UserControl
 {
     protected DataContextUserControl()
     {
-        DataContextChanged += OnDataContextChanged;
     }
 
     protected IServiceProvider Services => App.Services;
 
-    protected new TDataContext DataContext { get; private set; } = null!;
-
-    private void OnDataContextChanged(object? sender, EventArgs e)
+    protected new TDataContext DataContext
     {
-        var dataContext = (TDataContext) base.DataContext!;
-        DataContext = dataContext;
+        get => (TDataContext) base.DataContext!;
+        init => base.DataContext = value;
     }
 }
