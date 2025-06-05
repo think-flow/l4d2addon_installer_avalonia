@@ -23,14 +23,17 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+#if DEBUG
         if (Design.IsDesignMode) return;
+#endif
+
         SizeChanged += OnSizeChanged;
         Loaded += OnLoaded;
         Closing += OnClosing;
         this.GetObservable(WindowStateProperty).Subscribe(new AnonymousObserver<WindowState>(OnStateChanged));
     }
 
-    public IServiceProvider Provider => App.Services;
+    private IServiceProvider Services => App.Services;
 
     //监听窗口的状态
     private void OnStateChanged(WindowState state)
@@ -54,7 +57,7 @@ public partial class MainWindow : Window
     {
         var grid = Container;
         var leftCol = grid.ColumnDefinitions[0];
-        var appConfig = Provider.GetRequiredService<IAppConfigService>().AppConfig;
+        var appConfig = Services.GetRequiredService<IAppConfigService>().AppConfig;
         appConfig.LeftColWidthPercent = leftCol.ActualWidth / Width;
 
         var dataContext = (MainWindowViewModel) DataContext!;
@@ -65,14 +68,6 @@ public partial class MainWindow : Window
     {
         _isLoaded = true;
         InitializeLeftColWidth();
-        InitializeIsCoverd();
-    }
-
-    private void InitializeIsCoverd()
-    {
-        var appConfig = App.Services.GetRequiredService<IAppConfigService>().AppConfig;
-        bool isCoverd = appConfig.IsCoverd ?? false;
-        ((MainWindowViewModel) DataContext!).IsCoverd = isCoverd;
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
@@ -107,7 +102,7 @@ public partial class MainWindow : Window
     //初始化左边框宽度
     private void InitializeLeftColWidth()
     {
-        var appConfig = Provider.GetRequiredService<IAppConfigService>().AppConfig;
+        var appConfig = Services.GetRequiredService<IAppConfigService>().AppConfig;
 
         //如果没有配置LeftColWidthPercent，则回滚回编译时宽度
         if (appConfig.LeftColWidthPercent is null) return;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,4 +23,6 @@ public class ViewModelBase : ObservableObject
             Dispatcher.UIThread.Post(action);
         }
     }
+
+    protected Task ExecuteIfOnUiThread(Func<Task> action) => Dispatcher.UIThread.CheckAccess() ? action() : Dispatcher.UIThread.InvokeAsync(action);
 }

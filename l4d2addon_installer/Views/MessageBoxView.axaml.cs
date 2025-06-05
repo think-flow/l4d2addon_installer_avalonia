@@ -23,18 +23,6 @@ public partial class MessageBoxView : Message
         Initialize(this);
     }
 
-    /*
-    /// <summary>
-    /// 弹出Success样式的消息框
-    /// </summary>
-    public void Success(string message) => ShowMsg("success", message);
-
-    /// <summary>
-    /// 弹出Error样式的消息框
-    /// </summary>
-    public void Error(string message) => ShowMsg("error", message);
-    */
-
     protected override void ShowMsg(string @class, string message)
     {
         var border = new Border

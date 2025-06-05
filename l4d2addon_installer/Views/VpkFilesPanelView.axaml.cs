@@ -20,10 +20,13 @@ public partial class VpkFilesPanelView : DataContextUserControl<VpkFilesPanelVie
     {
         InitializeComponent();
         DataContext = new VpkFilesPanelViewModel();
+#if DEBUG
         if (Design.IsDesignMode) return;
+#endif
         Loaded += OnLoaded;
     }
 
+    // ReSharper disable once AsyncVoidMethod
     private async void OnLoaded(object? sender, RoutedEventArgs e)
     {
         Debug.Assert(DataContext is not null);

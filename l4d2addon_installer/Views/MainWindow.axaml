@@ -11,7 +11,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/logo.ico"
         Title="vpk安装器"
-        WindowStartupLocation="CenterScreen" Name="root">
+        WindowStartupLocation="CenterScreen">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -28,7 +28,7 @@
         </Style>
     </Window.Styles>
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <local:MessageBoxView />
         <Grid ColumnDefinitions="*,5,2*" x:Name="Container" ZIndex="-2000">
             <!-- 窗口左边框 -->
@@ -37,7 +37,7 @@
             <!-- 窗口右边框 -->
             <Grid Grid.Column="2" RowDefinitions="75*,25*">
                 <local:OperationPanelView Grid.Row="0"
-                                          IsCoverd="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsCoverd, FallbackValue={x:Null}}" />
+                                          IsCoverd="{Binding #RootGrid.((vm:MainWindowViewModel)DataContext).IsCoverd, FallbackValue={x:Null}}" />
                 <local:LogsPanelView Grid.Row="1" />
             </Grid>
         </Grid>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -18,14 +19,15 @@ namespace l4d2addon_installer.ViewModels;
 
 public partial class VpkFilesPanelViewModel : ViewModelBase
 {
-    private readonly LoggerService _logger;
-    private readonly VpkFileService _vpkFileService;
+    private readonly LoggerService _logger = null!;
+    private readonly VpkFileService _vpkFileService = null!;
 
     [ObservableProperty]
     private bool _canRevealFile;
 
     public VpkFilesPanelViewModel()
     {
+#if DEBUG
         if (IsDesignMode)
         {
             var now = DateTime.Now;
@@ -44,6 +46,7 @@ public partial class VpkFilesPanelViewModel : ViewModelBase
 
             return;
         }
+#endif
 
         _vpkFileService = Services.GetRequiredService<VpkFileService>();
         _logger = Services.GetRequiredService<LoggerService>();
@@ -56,12 +59,12 @@ public partial class VpkFilesPanelViewModel : ViewModelBase
         };
 
         //设置处理addons文件夹变更的回调函数
-        HandleFileWatcherMessage(_vpkFileService.FileWatcherMessageReader);
+        StartFileWatcherMessageHandler(_vpkFileService.FileWatcherMessageReader);
     }
 
     public ObservableSortedCollection<VpkFileInfoViewModel> VpkFiles { get; } = new(new VpkFileInfoViewModel.VpkFileInfoViewModelComparer());
 
-    public ObservableCollection<VpkFileInfoViewModel> SelectedVpkFiles { get; }
+    public ObservableCollection<VpkFileInfoViewModel> SelectedVpkFiles { get; } = null!;
 
     private bool CanCopyFileName => SelectedVpkFiles.Count > 0;
 
@@ -149,32 +152,42 @@ public partial class VpkFilesPanelViewModel : ViewModelBase
         }
     }
 
-    private async void HandleFileWatcherMessage(ChannelReader<FileWatcherMessage> reader)
+    private void StartFileWatcherMessageHandler(ChannelReader<FileWatcherMessage> reader)
     {
-        await foreach (var msg in reader.ReadAllAsync().ConfigureAwait(false))
+        //启动一个专用线程，用来监听文件夹变化
+        var thread = new Thread(() =>
         {
-            ExecuteIfOnUiThread(() =>
+            while (reader.WaitToReadAsync().Preserve().GetAwaiter().GetResult())
             {
-                switch (msg.Type)
+                var msg = reader.ReadAsync().Preserve().GetAwaiter().GetResult();
+                _ = ExecuteIfOnUiThread(async () =>
                 {
-                    case FileWatcherMessage.MessageType.Created:
-                        OnVpkFileCreatedHandler(msg.FilePath);
-                        break;
-                    case FileWatcherMessage.MessageType.Deleted:
-                        OnVpkFileDeletedHandler(msg.FilePath);
-                        break;
-                    case FileWatcherMessage.MessageType.Renamed:
-                        OnVpkFileRenamedHandler(msg.OldFilePath, msg.FilePath);
-                        break;
-                    default:
-                        throw new InvalidOperationException("invalid message type");
-                }
-            });
-        }
+                    switch (msg.Type)
+                    {
+                        case FileWatcherMessage.MessageType.Created:
+                            await OnVpkFileCreatedHandlerAsync(msg.FilePath);
+                            break;
+                        case FileWatcherMessage.MessageType.Deleted:
+                            await OnVpkFileDeletedHandlerAsync(msg.FilePath);
+                            break;
+                        case FileWatcherMessage.MessageType.Renamed:
+                            await OnVpkFileRenamedHandlerAsync(msg.OldFilePath, msg.FilePath);
+                            break;
+                        default:
+                            throw new InvalidOperationException("invalid message type");
+                    }
+                });
+            }
+        })
+        {
+            Name = "VpkFileWatcherThread",
+            IsBackground = true
+        };
+        thread.Start();
     }
 
     //处理addons文件夹删除了vpk文件，通知
-    private async void OnVpkFileCreatedHandler(string fullPath)
+    private async Task OnVpkFileCreatedHandlerAsync(string fullPath)
     {
         try
         {
@@ -188,31 +201,32 @@ public partial class VpkFilesPanelViewModel : ViewModelBase
     }
 
     //处理addons文件夹删除了vpk文件，通知
-    private void OnVpkFileDeletedHandler(string fullPath)
+    private Task OnVpkFileDeletedHandlerAsync(string fullPath)
     {
         VpkFiles.RemoveBasedEquals(new VpkFileInfoViewModel {Path = fullPath});
+        return Task.CompletedTask;
     }
 
     //处理addons文件夹删除了vpk文件，通知
-    private void OnVpkFileRenamedHandler(string oldFullPath, string newFullPath)
+    private async Task OnVpkFileRenamedHandlerAsync(string oldFullPath, string newFullPath)
     {
         string oldEx = Path.GetExtension(oldFullPath);
         string newEx = Path.GetExtension(newFullPath);
         if (string.Equals(oldEx, newEx, StringComparison.OrdinalIgnoreCase))
         {
             //重命名   删除然后新增
-            OnVpkFileDeletedHandler(oldFullPath);
-            OnVpkFileCreatedHandler(newFullPath);
+            await OnVpkFileDeletedHandlerAsync(oldFullPath);
+            await OnVpkFileCreatedHandlerAsync(newFullPath);
         }
         else if (!oldEx.Equals(".vpk", StringComparison.OrdinalIgnoreCase))
         {
             //其他扩展名改成vpk了  新增
-            OnVpkFileCreatedHandler(newFullPath);
+            await OnVpkFileCreatedHandlerAsync(newFullPath);
         }
         else
         {
             //vpk改成其他扩展名了   删除
-            OnVpkFileDeletedHandler(oldFullPath);
+            await OnVpkFileDeletedHandlerAsync(oldFullPath);
         }
     }
 }

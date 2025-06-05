@@ -167,7 +167,7 @@
 
     <Grid RowDefinitions="50*,50*">
         <WrapPanel Classes="top" Grid.Row="0">
-            <Button Classes="button-primary" Command="{Binding OpenAddonsFloderCommand}">addons文件夹</Button>
+            <Button Classes="button-primary" Command="{Binding OpenAddonsFolderCommand}">addons文件夹</Button>
             <Button Classes="button-primary" Command="{Binding OpenGameFolderCommand}">l4d2文件夹</Button>
             <Button Classes="button-primary" Command="{Binding OpenDownloadsFolderCommand}">下载文件夹</Button>
             <Button Classes="button-primary" Command="{Binding OpenRecycleBinFolderCommand}">打开回收站</Button>

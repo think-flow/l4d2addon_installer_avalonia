@@ -13,7 +13,10 @@ public partial class LogsPanelView : DataContextUserControl<LogsPanelViewModel>
     {
         InitializeComponent();
         DataContext = new LogsPanelViewModel();
+#if DEBUG
         if (Design.IsDesignMode) return;
+#endif
+
         Loaded += OnLoaded;
     }
 
@@ -23,6 +26,7 @@ public partial class LogsPanelView : DataContextUserControl<LogsPanelViewModel>
         DataContext.Logs.CollectionChanged += OnLogsCollectionChanged;
     }
 
+    // ReSharper disable once AsyncVoidMethod
     private async void OnLogsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         await Task.Delay(100);

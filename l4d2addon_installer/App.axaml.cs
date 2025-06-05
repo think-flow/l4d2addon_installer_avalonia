@@ -41,9 +41,13 @@ public class App : Application
             // 确保窗口在加载过程中能获取配置信息
             LoadAppConfig();
 
-            var mainWindow = new MainWindow();
+            //确保 MainWindowViewModel 先于 MainWindow 实例化
+            var viewModel = new MainWindowViewModel();
+            var mainWindow = new MainWindow
+            {
+                DataContext = viewModel
+            };
             MainWindow = mainWindow;
-            mainWindow.DataContext = new MainWindowViewModel();
             desktop.MainWindow = mainWindow;
 
             //注册程序退出事件

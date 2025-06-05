@@ -23,10 +23,13 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     {
         InitializeComponent();
         DataContext = new OperationPanelViewModel();
+#if DEBUG
         if (Design.IsDesignMode) return;
+#endif
     }
 
     //选择文件安装
+    // ReSharper disable once AsyncVoidMethod
     private async void BottomPanel_OnPointerPressed(object? _, PointerPressedEventArgs e)
     {
         e.Handled = true;
@@ -45,6 +48,8 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     }
 
     //拖动文件安装
+    // ReSharper disable once AsyncVoidMethod
+    // ReSharper disable once UnusedMember.Local
     private async void BottomPanel_OnDrop(object? _, DragEventArgs e)
     {
         e.Handled = true;
@@ -76,13 +81,13 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
         bool isCoverd = IsCoverd;
         var vpkFileService = Services.GetRequiredService<VpkFileService>();
 
-        bool isSuccessd = true;
+        bool isSucceed = true;
         //并行安装文件
         await vpkFileService.InstallVpkFilesAsync(filePaths, isCoverd, (msg, ex) =>
         {
             if (ex is not null)
             {
-                isSuccessd = false;
+                isSucceed = false;
                 foreach (var inner in ex.InnerExceptions)
                 {
                     logger.LogError(inner.Message);
@@ -96,7 +101,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
                 logger.LogMessage(msg);
             }
         });
-        if (isSuccessd)
+        if (isSucceed)
         {
             Message.Success("安装成功");
         }
@@ -124,11 +129,7 @@ public partial class OperationPanelView : DataContextUserControl<OperationPanelV
     public bool IsCoverd
     {
         get => _isCoverd;
-        set
-        {
-            Log.Debug($"IsCoverd field:{_isCoverd} value {value}");
-            SetAndRaise(IsCoverdProperty, ref _isCoverd, value);
-        }
+        set => SetAndRaise(IsCoverdProperty, ref _isCoverd, value);
     }
 
     #endregion

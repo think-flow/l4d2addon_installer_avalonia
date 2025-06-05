@@ -8,21 +8,24 @@ namespace l4d2addon_installer.ViewModels;
 
 public partial class OperationPanelViewModel : ViewModelBase
 {
-    private readonly LoggerService _logger;
-    private readonly VpkFileService _vpkFileService;
+    private readonly LoggerService _logger = null!;
+    private readonly VpkFileService _vpkFileService = null!;
 
     [ObservableProperty]
     private bool _showLoading;
 
     public OperationPanelViewModel()
     {
+#if DEBUG
         if (IsDesignMode) return;
+#endif
+
         _vpkFileService = Services.GetRequiredService<VpkFileService>();
         _logger = Services.GetRequiredService<LoggerService>();
     }
 
     [RelayCommand]
-    private async Task OpenAddonsFloder()
+    private async Task OpenAddonsFolder()
     {
         try
         {

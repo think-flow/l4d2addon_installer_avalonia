@@ -11,6 +11,7 @@ public class LogsPanelViewModel : ViewModelBase
 {
     public LogsPanelViewModel()
     {
+#if DEBUG
         if (IsDesignMode)
         {
             var now = DateTime.Now;
@@ -24,7 +25,7 @@ public class LogsPanelViewModel : ViewModelBase
 
             return;
         }
-
+#endif
         //设置处理log消息的函数
         var logger = Services.GetRequiredService<LoggerService>();
         HandleLogMessage(logger.LogMessageReader);
