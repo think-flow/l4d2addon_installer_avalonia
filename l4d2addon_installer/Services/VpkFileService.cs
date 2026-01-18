@@ -350,11 +350,12 @@ public partial class VpkFileService
         //解析 libraryfolders.vdf 文件
         string vdfContent = File.ReadAllText(libraryFoldersVDFFilePath);
         var matches = Regex.Matches(vdfContent, @"""path""\s+""([^""]+)""");
-        string[] libraryFolders = matches.Select(match => match.Groups[1].Value).ToArray();
+        var libraryFolders = matches.Select(match => match.Groups[1].Value);
 
         foreach (string folder in libraryFolders)
         {
-            string gamePath = Path.Join(folder, "steamapps", "common", "Left 4 Dead 2");
+            var folderPath = folder.Replace(@"\\", @"\"); // Normalize vdf中的libraryFolder路径
+            string gamePath = Path.Join(folderPath, "steamapps", "common", "Left 4 Dead 2");
             if (Directory.Exists(gamePath))
             {
                 _gamePath = gamePath;
