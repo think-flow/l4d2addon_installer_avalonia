@@ -349,7 +349,7 @@ public partial class VpkFileService
 
         //解析 libraryfolders.vdf 文件
         string vdfContent = File.ReadAllText(libraryFoldersVDFFilePath);
-        var matches = Regex.Matches(vdfContent, """ "path"\s+"([^"]+)" """);
+        var matches = Regex.Matches(vdfContent, @"""path""\s+""([^""]+)""");
         string[] libraryFolders = matches.Select(match => match.Groups[1].Value).ToArray();
 
         foreach (string folder in libraryFolders)
