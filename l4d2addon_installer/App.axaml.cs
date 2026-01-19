@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
@@ -8,6 +9,7 @@ using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
 using l4d2addon_installer.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace l4d2addon_installer;
 
@@ -41,14 +43,29 @@ public class App : Application
             // 确保窗口在加载过程中能获取配置信息
             LoadAppConfig();
 
-            //确保 MainWindowViewModel 先于 MainWindow 实例化
-            var viewModel = new MainWindowViewModel();
-            var mainWindow = new MainWindow
+            try
             {
-                DataContext = viewModel
-            };
-            MainWindow = mainWindow;
-            desktop.MainWindow = mainWindow;
+                //确保 MainWindowViewModel 先于 MainWindow 实例化
+                var viewModel = new MainWindowViewModel();
+                var mainWindow = new MainWindow
+                {
+                    DataContext = viewModel
+                };
+                MainWindow = mainWindow;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "未处理异常");
+#if DEBUG
+                NativeMessageBox.ShowError(e.ToString(), "Error");
+#endif
+#if RELEASE
+                NativeMessageBox.ShowError(e.Message, "Error");
+#endif
+                Environment.Exit(1);
+            }
+
+            desktop.MainWindow = MainWindow;
 
             //注册程序退出事件
             desktop.Exit += DesktopOnExit;
@@ -77,16 +94,16 @@ public class App : Application
     }
 
     //程序退出时的处理
-    private void DesktopOnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    private void DesktopOnExit(object? sender, ControlledApplicationLifetimeExitEventArgs _)
     {
         var appConfigService = Services.GetRequiredService<IAppConfigService>();
         try
         {
             appConfigService.StoreConfig();
         }
-        catch
+        catch (ServiceException e)
         {
-            // ignored
+            Log.Error(e, "保存config文件失败");
         }
     }
 
@@ -101,5 +118,16 @@ public class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+}
+
+internal static partial class NativeMessageBox
+{
+    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
+
+    public static void ShowError(string message, string caption)
+    {
+        _ = MessageBoxW(IntPtr.Zero, message, caption, 0x00000010);
     }
 }

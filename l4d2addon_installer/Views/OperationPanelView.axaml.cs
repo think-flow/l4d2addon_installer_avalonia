@@ -11,7 +11,6 @@ using Avalonia.Platform.Storage;
 using l4d2addon_installer.Services;
 using l4d2addon_installer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 
 namespace l4d2addon_installer.Views;
 
