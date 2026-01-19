@@ -8,8 +8,7 @@
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
-
-        <PublishAot>true</PublishAot>
+        
         <!-- Recommended Avalonia trimming settings for Native AOT -->
         <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
         <TrimMode>link</TrimMode>
@@ -30,7 +29,7 @@
         <TrimmerRootAssembly Include="Avalonia.Themes.Fluent"/>
     </ItemGroup>
 
-    <ItemGroup Label="ImportLib">
+    <ItemGroup Label="ImportLib" Condition="'$(EnableStaticNativeLibraries)' == 'true'">
         <DirectPInvoke Include="libHarfBuzzSharp"/>
         <NativeLibrary Include="Native\libHarfBuzzSharp.lib"/>
         <DirectPInvoke Include="libSkiaSharp"/>
