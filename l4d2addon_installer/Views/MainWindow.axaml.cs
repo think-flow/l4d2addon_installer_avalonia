@@ -39,15 +39,18 @@ public partial class MainWindow : Window
     private void OnStateChanged(WindowState state)
     {
         Log.Debug("MainWindow WindowState: {@WindowState}", state);
-        if (state == WindowState.Minimized)
+        if (OperatingSystem.IsWindows())
         {
-            // 最小化窗口时，启用EcoQos
-            EcoQosProcess.EnableEcoQos();
-        }
-        else if (_preWindowState == WindowState.Minimized)
-        {
-            // 当由最小化变为其他状态时，禁用EcoQos
-            EcoQosProcess.DisableEcoQos();
+            if (state == WindowState.Minimized)
+            {
+                // 最小化窗口时，启用EcoQos
+                EcoQosProcess.EnableEcoQos();
+            }
+            else if (_preWindowState == WindowState.Minimized)
+            {
+                // 当由最小化变为其他状态时，禁用EcoQos
+                EcoQosProcess.DisableEcoQos();
+            }
         }
 
         _preWindowState = state;

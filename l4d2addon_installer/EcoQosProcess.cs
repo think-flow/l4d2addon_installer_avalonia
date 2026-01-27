@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace l4d2addon_installer;
 
@@ -10,6 +11,7 @@ namespace l4d2addon_installer;
 /// 微软在win11上推出的效能模式
 /// https://devblogs.microsoft.com/performance-diagnostics/introducing-ecoqos/
 /// </summary>
+[SupportedOSPlatform("windows")]
 public static partial class EcoQosProcess
 {
     private static readonly IntPtr pThrottleOn;
