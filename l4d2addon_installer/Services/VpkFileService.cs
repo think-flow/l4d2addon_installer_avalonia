@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -39,7 +40,23 @@ public partial class VpkFileService
     /// </summary>
     /// <param name="fileInfo"></param>
     /// <exception cref="ServiceException"></exception>
-    public async Task RevealFileAsync(VpkFileInfoViewModel fileInfo)
+    public Task RevealFileAsync(VpkFileInfoViewModel fileInfo)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return RevealFileOnWindowsAsync(fileInfo);
+        }
+
+        if (OperatingSystem.IsLinux())
+        {
+            return RevealFileOnLinuxAsync(fileInfo);
+        }
+
+        throw new UnreachableException("Not supported OperatingSystem");
+    }
+
+    [SupportedOSPlatform("windows")]
+    private async Task RevealFileOnWindowsAsync(VpkFileInfoViewModel fileInfo)
     {
         int exitCode;
         try
@@ -58,6 +75,63 @@ public partial class VpkFileService
         }
 
         if (exitCode != 1) throw new ServiceException($"VpkFileService.RevealFileAsync returned exit code [{exitCode}]");
+    }
+
+    [SupportedOSPlatform("linux")]
+    private Task RevealFileOnLinuxAsync(VpkFileInfoViewModel fileInfo)
+    {
+        // 尝试使用支持 --select 的文件管理器
+        string[] fileManagers = new[] {"nautilus", "dolphin"};
+        foreach (string fm in fileManagers)
+        {
+            if (IsCommandAvailable(fm))
+            {
+                try
+                {
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = fm,
+                        Arguments = $"--select \"{fileInfo.Path}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var p = Process.Start(startInfo);
+                    if (p != null)
+                    {
+                        return Task.CompletedTask; // 成功启动
+                    }
+                }
+                catch
+                {
+                    // 忽略，尝试下一个
+                }
+            }
+        }
+
+        // 回退：用 xdg-open 打开所在目录（不选中文件）
+        return OpenPathAsync(Path.GetDirectoryName(fileInfo.Path)!);
+
+        // 检查命令是否存在
+        static bool IsCommandAvailable(string command)
+        {
+            try
+            {
+                using var p = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "which",
+                    Arguments = command,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                });
+                p?.WaitForExit();
+                return p?.ExitCode == 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     /// <summary>
@@ -306,6 +380,23 @@ public partial class VpkFileService
     /// <exception cref="ServiceException"></exception>
     public string GetSteamPath()
     {
+        if (OperatingSystem.IsWindows())
+        {
+            return GetSteamPathOnWindows();
+        }
+
+        if (OperatingSystem.IsLinux())
+        {
+            return GetSteamPathOnLinux();
+        }
+
+        // 不受支持的操作系统
+        throw new UnreachableException("Not supported OperatingSystem");
+    }
+
+    [SupportedOSPlatform("windows")]
+    private string GetSteamPathOnWindows()
+    {
         if (_steamPath != null) return _steamPath;
 
         try
@@ -331,6 +422,31 @@ public partial class VpkFileService
         }
     }
 
+    [SupportedOSPlatform("linux")]
+    private string GetSteamPathOnLinux()
+    {
+        if (_steamPath != null) return _steamPath;
+        // 常见的 Linux Steam 安装路径
+        string[] possiblePaths = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "Steam"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".steam", "steam"),
+            "/usr/share/steam",
+            "/usr/local/share/steam"
+        };
+
+        foreach (string path in possiblePaths)
+        {
+            if (Directory.Exists(path))
+            {
+                _steamPath = path;
+                return _steamPath;
+            }
+        }
+
+        throw new ServiceException("未找到Steam安装路径");
+    }
+
     /// <summary>
     /// 获取 Left 4 Dead 2 的安装路径
     /// </summary>
@@ -354,7 +470,7 @@ public partial class VpkFileService
 
         foreach (string folder in libraryFolders)
         {
-            var folderPath = folder.Replace(@"\\", @"\"); // Normalize vdf中的libraryFolder路径
+            string folderPath = folder.Replace(@"\\", @"\"); // Normalize vdf中的libraryFolder路径
             string gamePath = Path.Join(folderPath, "steamapps", "common", "Left 4 Dead 2");
             if (Directory.Exists(gamePath))
             {
@@ -425,7 +541,48 @@ public partial class VpkFileService
     /// <returns></returns>
     public Task OpenDownloadsFolderAsync()
     {
-        string path = "shell:Downloads";
+        string path;
+        if (OperatingSystem.IsWindows())
+        {
+            path = "shell:Downloads";
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "xdg-user-dir",
+                Arguments = "DOWNLOAD",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException("无法启动 xdg-user-dir");
+            }
+
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                string error = process.StandardError.ReadToEnd();
+                throw new InvalidOperationException($"xdg-user-dir failed: {error}");
+            }
+
+            string? download_path = process.StandardOutput.ReadLine()?.Trim();
+            if (string.IsNullOrEmpty(download_path))
+            {
+                throw new InvalidOperationException("xdg-user-dir returned empty path");
+            }
+
+            path = download_path;
+        }
+        else
+        {
+            throw new UnreachableException("Not supported OperatingSystem");
+        }
+
         return OpenPathAsync(path);
     }
 
@@ -436,7 +593,20 @@ public partial class VpkFileService
     /// <returns></returns>
     public Task OpenRecycleBinFolderAsync()
     {
-        string path = "shell:RecycleBinFolder";
+        string path;
+        if (OperatingSystem.IsWindows())
+        {
+            path = "hell:RecycleBinFolder";
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            path = "trash:///";
+        }
+        else
+        {
+            throw new UnreachableException("Not supported OperatingSystem");
+        }
+
         return OpenPathAsync(path);
     }
 
@@ -476,17 +646,38 @@ public partial class VpkFileService
     {
         try
         {
-            await Task.Run(() =>
+            if (OperatingSystem.IsWindows())
             {
-                var process = Process.Start("explorer.exe", $"\"{path}\"");
-                process.WaitForExit();
-                int exitCode = process.ExitCode;
-                if (exitCode != 1)
+                await Task.Run(() =>
                 {
-                    throw new ServiceException($"explorer returned exit code [{exitCode}]");
+                    var process = Process.Start("explorer.exe", $"\"{path}\"");
+                    process.WaitForExit();
+                    int exitCode = process.ExitCode;
+                    if (exitCode != 1)
+                    {
+                        throw new ServiceException($"explorer returned exit code [{exitCode}]");
+                    }
+                });
+                await Task.Delay(500); //延迟500毫秒 优化用户体验
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                // 使用 xdg-open 打开默认文件管理器
+                var startInfo = new ProcessStartInfo("xdg-open", $"\"{path}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new ServiceException("无法启动xdg-open");
                 }
-            });
-            await Task.Delay(500); //延迟500毫秒 优化用户体验
+            }
+            else
+            {
+                throw new UnreachableException("Not supported OperatingSystem");
+            }
         }
         catch (Exception e)
         {
@@ -539,6 +730,23 @@ public partial class VpkFileService
         /// <exception cref="IOException"></exception>
         public static void DeleteToRecycleBin(string filePath)
         {
+            if (OperatingSystem.IsWindows())
+            {
+                DeleteToRecycleBinOnWindows(filePath);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                DeleteToRecycleBinOnLinux(filePath);
+            }
+            else
+            {
+                throw new UnreachableException("Not supported OperatingSystem");
+            }
+        }
+
+        [SupportedOSPlatform("windows")]
+        private static void DeleteToRecycleBinOnWindows(string filePath)
+        {
             var fileop = new SHFILEOPSTRUCT
             {
                 wFunc = FO_DELETE,
@@ -558,15 +766,45 @@ public partial class VpkFileService
             }
         }
 
+        [SupportedOSPlatform("linux")]
+        private static void DeleteToRecycleBinOnLinux(string filePath)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "gio",
+                Arguments = $"trash \"{filePath}\"",
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            process?.WaitForExit();
+
+            if (process?.ExitCode != 0)
+            {
+                string? error = process?.StandardError.ReadToEnd();
+                throw new InvalidOperationException($"无法移入回收站: {error}");
+            }
+        }
+
+
         #region RecycleBinHelper 核心
 
+        [SupportedOSPlatform("windows")]
         private const int FO_DELETE = 3;
+
+        [SupportedOSPlatform("windows")]
         private const int FOF_ALLOWUNDO = 0x40;
+
+        [SupportedOSPlatform("windows")]
         private const int FOF_NO_UI = 0x0614; // FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI
 
+        [SupportedOSPlatform("windows")]
         [LibraryImport("shell32.dll", SetLastError = true)]
         private static partial int SHFileOperationW(ref SHFILEOPSTRUCT lpFileOp);
 
+        [SupportedOSPlatform("windows")]
         [NativeMarshalling(typeof(SHFILEOPSTRUCTMarshaller))]
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct SHFILEOPSTRUCT
@@ -582,6 +820,7 @@ public partial class VpkFileService
         }
 
         //SHFILEOPSTRUCT 结构体的封送程序
+        [SupportedOSPlatform("windows")]
         [CustomMarshaller(typeof(SHFILEOPSTRUCT), MarshalMode.ManagedToUnmanagedRef, typeof(SHFILEOPSTRUCTMarshaller))]
         private static class SHFILEOPSTRUCTMarshaller
         {

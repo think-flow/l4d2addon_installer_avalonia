@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
@@ -57,10 +58,16 @@ public class App : Application
             {
                 Log.Error(e, "未处理异常");
 #if DEBUG
-                NativeMessageBox.ShowError(e.ToString(), "Error");
+                if (OperatingSystem.IsWindows())
+                {
+                    NativeMessageBox.ShowError(e.ToString(), "Error");
+                }
 #endif
 #if RELEASE
-                NativeMessageBox.ShowError(e.Message, "Error");
+                if (OperatingSystem.IsWindows())
+                {
+                    NativeMessageBox.ShowError(e.Message, "Error");
+                }
 #endif
                 Environment.Exit(1);
             }
@@ -121,6 +128,7 @@ public class App : Application
     }
 }
 
+[SupportedOSPlatform("windows")]
 internal static partial class NativeMessageBox
 {
     [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
