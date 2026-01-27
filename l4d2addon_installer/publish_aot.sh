@@ -19,6 +19,3 @@ if [  $? -eq 0 ]; then
 else
     echo "xxx 发布失败！请检查错误信息"
 fi
-
-# 退出提示（按回车继续）
-read -p "按 Enter 键退出..."
