@@ -596,7 +596,7 @@ public partial class VpkFileService
         string path;
         if (OperatingSystem.IsWindows())
         {
-            path = "hell:RecycleBinFolder";
+            path = "shell:RecycleBinFolder";
         }
         else if (OperatingSystem.IsLinux())
         {
