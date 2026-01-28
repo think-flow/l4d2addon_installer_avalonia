@@ -77,6 +77,19 @@ public partial class OperationPanelViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task StartMapinfoProgram()
+    {
+        try
+        {
+            await _vpkFileService.StartMapinfoProgramAsync();
+        }
+        catch (ServiceException e)
+        {
+            _logger.LogError(e.Message);
+        }
+    }
+
+    [RelayCommand]
     private async Task StartGame()
     {
         try

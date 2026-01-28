@@ -641,6 +641,58 @@ public partial class VpkFileService
         }
     }
 
+    /// <summary>
+    /// 启动mapinfo程序
+    /// </summary>
+    public Task StartMapinfoProgramAsync()
+    {
+        string addonsPath = GetAddonsPath();
+        string programName;
+        if (OperatingSystem.IsWindows())
+        {
+            programName = "map_info2.exe";
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            programName = "map_info";
+        }
+        else
+        {
+            throw new UnreachableException("Not supported OperatingSystem");
+        }
+
+        if (!File.Exists(Path.Join(addonsPath, programName)))
+        {
+            throw new ServiceException($"没有找到 {programName}");
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = programName,
+                WorkingDirectory = addonsPath,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            });
+            if (process == null) throw new ServiceException($"无法启动 {programName}");
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "x-terminal-emulator",
+                Arguments = $"-e \"./{programName}\"",
+                WorkingDirectory = addonsPath,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            });
+            if (process == null) throw new ServiceException($"无法启动 {programName}");
+        }
+
+        return Task.CompletedTask;
+    }
+
     //通过explorer 打开路径
     private async Task OpenPathAsync(string path)
     {

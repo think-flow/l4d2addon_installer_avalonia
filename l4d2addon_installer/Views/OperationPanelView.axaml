@@ -170,6 +170,7 @@
             <Button Classes="button-primary" Command="{Binding OpenGameFolderCommand}">l4d2文件夹</Button>
             <Button Classes="button-primary" Command="{Binding OpenDownloadsFolderCommand}">下载文件夹</Button>
             <Button Classes="button-primary" Command="{Binding OpenRecycleBinFolderCommand}">打开回收站</Button>
+            <Button Classes="button-primary" Command="{Binding StartMapinfoProgramCommand}">打开mapinfo</Button>
             <Button Classes="button-primary" Command="{Binding StartGameCommand}">启动游戏</Button>
             <!-- <Button>关于</Button> -->
         </WrapPanel>
