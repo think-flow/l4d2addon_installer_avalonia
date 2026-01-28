@@ -35,7 +35,6 @@
             <Setter Property="BorderThickness" Value="0,1,0,0" />
             <Style Selector="^ TextBlock">
                 <Setter Property="FontSize" Value="12" />
-                <Setter Property="FontFamily" Value="serif, sans-serif" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
         </Style>
@@ -48,8 +47,7 @@
                         Background="#eeeded"
                         CornerRadius="4"
                         Padding="5" Margin="3">
-                        <ContentPresenter FontSize="12" FontFamily="serif, sans-serif"
-                                          Content="{TemplateBinding Content}" />
+                        <ContentPresenter FontSize="12" Content="{TemplateBinding Content}" />
                     </Border>
                 </ControlTemplate>
             </Setter>
@@ -57,7 +55,6 @@
 
         <Style Selector="ContextMenu">
             <Setter Property="FontSize" Value="13.5" />
-            <Setter Property="FontFamily" Value="serif, sans-serif" />
             <Setter Property="CornerRadius" Value="10" />
             <Style Selector="^ /template/ Border">
                 <Setter Property="BoxShadow" Value="0 0 10 0 #25000000" />

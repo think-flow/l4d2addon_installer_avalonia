@@ -15,8 +15,7 @@
         <!-- 更改全局字体大小和样式 -->
         <Style Selector="Window">
             <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontFamily"
-                    Value="Helvetica Neue,Helvetica,PingFang SC,Hiragino Sans GB,Microsoft YaHei,微软雅黑,Arial,sans-serif" />
+            <Setter Property="FontFamily" Value="Arial, DejaVu Sans, Liberation Sans, Noto Sans, sans-serif" />
         </Style>
 
         <!-- 滚动条样式 -->

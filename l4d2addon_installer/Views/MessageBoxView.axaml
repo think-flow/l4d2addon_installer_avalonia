@@ -26,7 +26,6 @@
             </Style>
 
             <Style Selector="^ SelectableTextBlock">
-                <Setter Property="FontFamily" Value="Microsoft YaHei" />
                 <Setter Property="FontSize" Value="{StaticResource FontSize}" />
                 <Setter Property="TextWrapping" Value="Wrap" />
                 <Setter Property="SelectionForegroundBrush" Value="White" />

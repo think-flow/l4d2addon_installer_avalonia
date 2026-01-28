@@ -29,7 +29,6 @@
             <Style Selector="^ TextBlock">
                 <Setter Property="TextWrapping" Value="Wrap" />
                 <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="FontFamily" Value="serif, sans-serif" />
                 <Style Selector="^.time">
                     <Setter Property="FontSize" Value="12" />
                     <Setter Property="Foreground" Value="#808080c2" />
@@ -39,7 +38,6 @@
             <Style Selector="^ SelectableTextBlock">
                 <Setter Property="TextWrapping" Value="Wrap" />
                 <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="FontFamily" Value="serif, sans-serif" />
                 <Setter Property="SelectionForegroundBrush" Value="White" />
                 <Style Selector="^.message">
                     <Setter Property="FontSize" Value="13.5" />
@@ -56,7 +54,6 @@
             <Style Selector="^ MenuFlyoutPresenter">
                 <Setter Property="CornerRadius" Value="10" />
                 <Setter Property="FontSize" Value="13.5" />
-                <Setter Property="FontFamily" Value="serif, sans-serif" />
                 <Style Selector="^ /template/ Border#LayoutRoot">
                     <Setter Property="Margin" Value="5" />
                     <Setter Property="BoxShadow" Value="0 0 10 0 #25000000" />
