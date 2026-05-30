@@ -831,11 +831,13 @@ public partial class VpkFileService
             };
 
             using var process = Process.Start(startInfo);
-            process?.WaitForExit();
+            if (process == null) throw new InvalidOperationException("无法启动 gio");
 
-            if (process?.ExitCode != 0)
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
             {
-                string? error = process?.StandardError.ReadToEnd();
                 throw new InvalidOperationException($"无法移入回收站: {error}");
             }
         }

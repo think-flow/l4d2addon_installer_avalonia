@@ -114,24 +114,24 @@ public sealed class ObservableSortedCollection<T> :
 
     private int IndexOfBasedLoop(ref T item)
     {
-        int index = -1;
         for (int i = 0; i < _items.Keys.Count; i++)
         {
             var key = _items.Keys[i];
 
             if (0 == _items.Comparer.Compare(key, item))
             {
-                index = i;
                 var innerItem = _items.Keys[i];
                 //如果传入的item不是内部_items中保存的，则将其替换为内部的
                 if (!ReferenceEquals(item, innerItem))
                 {
                     item = _items[key];
                 }
+
+                return i;
             }
         }
 
-        return index;
+        return -1;
     }
 
     public int GetIndexFromKey(T item) => _items.Keys.IndexOf(item);

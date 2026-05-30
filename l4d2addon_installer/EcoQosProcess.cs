@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using Serilog;
 
 namespace l4d2addon_installer;
 
@@ -62,13 +63,19 @@ public static partial class EcoQosProcess
 
     private static void ToggleEfficiencyMode(IntPtr hProcess, bool enable)
     {
-        _ = SetProcessInformation(
-            hProcess,
-            PROCESS_INFORMATION_CLASS.ProcessPowerThrottling,
-            enable ? pThrottleOn : pThrottleOff,
-            (uint) szControlBlock
-        );
-        _ = SetPriorityClass(hProcess, enable ? PriorityClass.IDLE_PRIORITY_CLASS : PriorityClass.NORMAL_PRIORITY_CLASS);
+        if (!SetProcessInformation(
+                hProcess,
+                PROCESS_INFORMATION_CLASS.ProcessPowerThrottling,
+                enable ? pThrottleOn : pThrottleOff,
+                (uint) szControlBlock))
+        {
+            Log.Warning("SetProcessInformation failed, error code: {ErrorCode}", Marshal.GetLastWin32Error());
+        }
+
+        if (!SetPriorityClass(hProcess, enable ? PriorityClass.IDLE_PRIORITY_CLASS : PriorityClass.NORMAL_PRIORITY_CLASS))
+        {
+            Log.Warning("SetPriorityClass failed, error code: {ErrorCode}", Marshal.GetLastWin32Error());
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
